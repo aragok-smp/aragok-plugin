@@ -2,10 +2,17 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
+repositories {
+    maven("https://repo.lucko.me/") {
+        name = "lucko-repo"
+    }
+}
+
 dependencies {
     implementation(project(":common"))
 
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
+    compileOnly("net.luckperms:api:5.5-SNAPSHOT")
 }
 
 tasks {
