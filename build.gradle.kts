@@ -6,7 +6,7 @@ plugins {
 
 allprojects {
     group = "io.d2a"
-    version = "1.0-SNAPSHOT"
+    version = "0.1-SNAPSHOT"
 }
 
 subprojects {

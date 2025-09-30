@@ -8,16 +8,21 @@ dependencies {
 
     compileOnly("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
     kapt("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
-
-    implementation(kotlin("stdlib"))
-    testImplementation(kotlin("test"))
 }
 
-tasks.shadowJar {
-    archiveBaseName.set("aragok-velocity")
-    archiveClassifier.set("")
-}
+tasks {
+    shadowJar {
+        archiveBaseName.set("aragok-velocity")
+        archiveClassifier.set("")
+        mergeServiceFiles()
+        minimize()
+    }
 
-tasks.build {
-    dependsOn(tasks.shadowJar)
+    build {
+        dependsOn(shadowJar)
+    }
+
+    jar {
+        enabled = false
+    }
 }
