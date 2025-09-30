@@ -1,14 +1,14 @@
 package io.d2a.ara.paper.survival
 
-import io.d2a.ara.paper.base.extension.closeQuietly
-import io.d2a.ara.paper.base.extension.registerEvents
-import io.d2a.ara.paper.base.extension.withCommandRegistrar
+import io.d2a.ara.paper.base.activity.ActivityService
+import io.d2a.ara.paper.base.extension.*
 import io.d2a.ara.paper.survival.border.BorderTask
 import io.d2a.ara.paper.survival.border.TestAdvanceCommand
 import io.d2a.ara.paper.survival.coal.CoalType
 import io.d2a.ara.paper.survival.coal.FurnaceSmeltCoalListener
 import io.d2a.ara.paper.survival.devnull.DevNullItem
 import io.d2a.ara.paper.survival.devnull.ItemPickupDevNullListener
+import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
 import org.bukkit.plugin.java.JavaPlugin
 
 class AragokPaperSurvival : JavaPlugin() {
@@ -24,6 +24,14 @@ class AragokPaperSurvival : JavaPlugin() {
 
         registerCoalFeature()
         registerDevNullFeature()
+
+        val activityService = getService<ActivityService>()
+            ?: return disableWithError("ActivityService not found")
+        logger.info("Found activity service: $activityService")
+
+        val sleepListener = EnterBedSleepListener(activityService)
+        activityService.registerListener(sleepListener)
+        registerEvents(sleepListener)
 
         logger.info("Enabled aragok-survival")
     }

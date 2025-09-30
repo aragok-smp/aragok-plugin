@@ -27,5 +27,6 @@ fun String.toComponent(): Component =
 fun Component.namedColor(): NamedTextColor? =
     this.color()?.let { NamedTextColor.nearestTo(it) }
 
-fun Component.noItalic(): Component =
-    this.decoration(TextDecoration.ITALIC, false)
+fun Component.noItalic() = this.decoration(TextDecoration.ITALIC, false)
+
+fun Component.bold() = this.decoration(TextDecoration.BOLD, true)

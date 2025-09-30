@@ -4,6 +4,7 @@ import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import org.bukkit.event.Listener
 import org.bukkit.plugin.PluginManager
+import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.Closeable
 import java.util.logging.Level
@@ -42,3 +43,25 @@ fun JavaPlugin.registerEvents(vararg listeners: Listener) =
 fun JavaPlugin.closeQuietly(resource: Closeable?, name: String) =
     resource?.runCatching { close() }
         ?.onFailure { logger.log(Level.WARNING, "Failed to close $name", it) }
+
+/**
+ * Registers a service with the server's service manager.
+ */
+inline fun <reified S : Any> JavaPlugin.registerService(
+    service: S,
+    priority: ServicePriority = ServicePriority.Normal,
+) {
+    logger.info("Registering service: ${service.javaClass.name} with priority $priority")
+    server.servicesManager.register(
+        S::class.java,
+        service,
+        this,
+        priority
+    )
+}
+
+/**
+ * Retrieves a service from the server's service manager.
+ */
+inline fun <reified S> JavaPlugin.getService(): S? =
+    server.servicesManager.load(S::class.java)

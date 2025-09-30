@@ -7,4 +7,4 @@ dependencies:
   server:
     aragok-paper-base:
       required: true
-      load: AFTER
+      load: BEFORE
