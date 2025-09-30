@@ -2,6 +2,7 @@ package io.d2a.ara.paper.survival
 
 import io.d2a.ara.paper.base.activity.ActivityService
 import io.d2a.ara.paper.base.extension.*
+import io.d2a.ara.paper.survival.activity.ActivityChangedNotifier
 import io.d2a.ara.paper.survival.border.BorderTask
 import io.d2a.ara.paper.survival.border.TestAdvanceCommand
 import io.d2a.ara.paper.survival.coal.CoalType
@@ -29,8 +30,9 @@ class AragokPaperSurvival : JavaPlugin() {
             ?: return disableWithError("ActivityService not found")
         logger.info("Found activity service: $activityService")
 
-        val sleepListener = EnterBedSleepListener(activityService)
+        val sleepListener = EnterBedSleepListener()
         activityService.registerListener(sleepListener)
+        activityService.registerListener(ActivityChangedNotifier())
         registerEvents(sleepListener)
 
         logger.info("Enabled aragok-survival")
