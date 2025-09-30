@@ -1,0 +1,4 @@
+name: aragok-paper
+version: '1.0-SNAPSHOT'
+main: io.d2a.ara.aragokPaper.AragokPaper
+api-version: '1.21'
