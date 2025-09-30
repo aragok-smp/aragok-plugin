@@ -12,7 +12,6 @@ dependencies {
 
 tasks {
     shadowJar {
-        archiveBaseName.set("aragok-velocity")
         archiveClassifier.set("")
         mergeServiceFiles()
         minimize()

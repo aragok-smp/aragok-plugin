@@ -11,7 +11,6 @@ dependencies {
 
 tasks {
     shadowJar {
-        archiveBaseName.set("aragok-paper-base")
         archiveClassifier.set("")
         mergeServiceFiles()
         minimize()
