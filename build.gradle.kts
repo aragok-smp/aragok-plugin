@@ -6,7 +6,7 @@ plugins {
 
 allprojects {
     group = "io.d2a"
-    version = "0.1-SNAPSHOT"
+    version = project.findProperty("projVersion") ?: "0.0.1-SNAPSHOT"
 }
 
 subprojects {
