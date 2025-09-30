@@ -1,4 +1,4 @@
-package io.d2a.ara.aragokVelocity;
+package io.d2a.ara.velocity;
 
 import com.google.inject.Inject
 import com.velocitypowered.api.event.Subscribe

@@ -1,0 +1,4 @@
+name: aragok-paper-base
+version: '${version}'
+main: io.d2a.ara.paper.base.AragokPaperBase
+api-version: '1.21'

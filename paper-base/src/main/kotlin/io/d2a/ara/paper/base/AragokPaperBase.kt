@@ -1,9 +1,9 @@
-package io.d2a.ara.aragokPaper
+package io.d2a.ara.paper.base
 
 import io.d2a.ara.common.Common
 import org.bukkit.plugin.java.JavaPlugin
 
-class AragokPaper : JavaPlugin() {
+class AragokPaperBase : JavaPlugin() {
 
     override fun onEnable() {
         val c = Common()

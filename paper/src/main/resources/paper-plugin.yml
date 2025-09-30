@@ -1,4 +1,0 @@
-name: aragok-paper
-version: '${version}'
-main: io.d2a.ara.aragokPaper.AragokPaper
-api-version: '1.21'

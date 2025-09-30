@@ -1,3 +1,6 @@
 rootProject.name = "aragok-plugin"
 
-include(":common", ":velocity", ":paper")
+include(":common")
+include(":velocity")
+include(":paper-base")
+include(":paper-survival")
