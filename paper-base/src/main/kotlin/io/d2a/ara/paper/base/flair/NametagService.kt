@@ -1,7 +1,10 @@
 package io.d2a.ara.paper.base.flair
 
+import io.d2a.ara.paper.base.activity.ActivityService
 import io.d2a.ara.paper.base.extension.namedColor
 import io.d2a.ara.paper.base.extension.toComponent
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Player
 import org.bukkit.scoreboard.Scoreboard
 import java.util.*
@@ -11,6 +14,7 @@ class NametagService(
     private val logger: Logger,
     private val scoreboard: Scoreboard,
     private val prefixSuffixProvider: PrefixSuffixProvider,
+    private val activityService: ActivityService,
 ) {
 
     private val playerTeamNames = mutableMapOf<UUID, String>()
@@ -30,11 +34,15 @@ class NametagService(
         }
 
         val prefixComponent = prefixSuffixProvider.prefix(player).toComponent()
+        var suffix = prefixSuffixProvider.suffix(player).toComponent()
+        if (activityService.getActivityState(player) == ActivityService.ActivityState.AWAY) {
+            suffix = suffix.append(Component.text(" (away)", NamedTextColor.DARK_GRAY))
+        }
 
         team.apply {
             // apply prefix, suffix and coloring
             prefix(prefixComponent)
-            suffix(prefixSuffixProvider.suffix(player).toComponent())
+            suffix(suffix)
             color(prefixComponent.namedColor())
 
             // add player to it
