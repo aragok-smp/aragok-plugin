@@ -19,6 +19,9 @@ tasks {
     shadowJar {
         archiveClassifier.set("")
         mergeServiceFiles()
+
+//        relocate("kotlin", "thirdparty.io.d2a.ara.paper.base.kotlin")
+
         minimize()
     }
 

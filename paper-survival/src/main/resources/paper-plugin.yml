@@ -2,3 +2,9 @@ name: aragok-paper-survival
 version: '${version}'
 main: io.d2a.ara.paper.survival.AragokPaperSurvival
 api-version: '1.21'
+
+dependencies:
+  server:
+    aragok-paper-base:
+      required: true
+      load: AFTER
