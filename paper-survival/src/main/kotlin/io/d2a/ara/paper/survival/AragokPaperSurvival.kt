@@ -9,6 +9,9 @@ import io.d2a.ara.paper.survival.coal.CoalType
 import io.d2a.ara.paper.survival.coal.FurnaceSmeltCoalListener
 import io.d2a.ara.paper.survival.devnull.DevNullItem
 import io.d2a.ara.paper.survival.devnull.ItemPickupDevNullListener
+import io.d2a.ara.paper.survival.floo.FlooItem
+import io.d2a.ara.paper.survival.floo.PreventCraftingCustomItems
+import io.d2a.ara.paper.survival.floo.FlooListener
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -25,6 +28,7 @@ class AragokPaperSurvival : JavaPlugin() {
 
         registerCoalFeature()
         registerDevNullFeature()
+        registerFlooFeature()
 
         val activityService = getService<ActivityService>()
             ?: return disableWithError("ActivityService not found")
@@ -56,6 +60,16 @@ class AragokPaperSurvival : JavaPlugin() {
         DevNullItem.registerRecipe(this)
 
         registerEvents(ItemPickupDevNullListener())
+    }
+
+    fun registerFlooFeature() {
+        logger.info("Registering floo items and recipe...")
+        FlooItem.registerRecipe(this)
+
+        registerEvents(
+            FlooListener(logger),
+            PreventCraftingCustomItems(logger)
+        )
     }
 
 }
