@@ -3,6 +3,7 @@ package io.d2a.ara.paper.base
 import io.d2a.ara.paper.base.activity.ActivityService
 import io.d2a.ara.paper.base.activity.PlayerMovementActivity
 import io.d2a.ara.paper.base.commands.PrivilegesCommand
+import io.d2a.ara.paper.base.custom.PreventCraftingListener
 import io.d2a.ara.paper.base.extension.*
 import io.d2a.ara.paper.base.flair.*
 import io.d2a.ara.paper.base.flair.listener.InjectFlairToChatListener
@@ -19,6 +20,9 @@ class AragokPaperBase : JavaPlugin() {
     override fun onEnable() {
         val luckPerms = server.servicesManager.load(LuckPerms::class.java)
             ?: return disableWithError("LuckPerms not found, disabling plugin")
+
+        // custom items
+        registerEvents(PreventCraftingListener(logger))
 
         val activityService = PlayerMovementActivity(this, 15 * 60 * 1000) // 15 minutes
         registerEvents(activityService)

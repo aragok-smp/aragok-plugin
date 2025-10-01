@@ -1,9 +1,11 @@
 package io.d2a.ara.paper.base.extension
 
 import com.mojang.brigadier.Command
+import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import io.papermc.paper.command.brigadier.CommandSourceStack
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import org.bukkit.entity.Player
 
 /**
@@ -21,6 +23,23 @@ fun CommandContext<CommandSourceStack>.success(message: String): Int {
     this.source.sender.sendRichMessage("<green>$message")
     return Command.SINGLE_SUCCESS
 }
+
+/**
+ * Retrieves a player argument from the command context using a player selector.
+ * @return The first player selected by the argument. Null if no players are found.
+ */
+fun CommandContext<CommandSourceStack>.getPlayerArgument(name: String): Player =
+    this.getArgument(name, PlayerSelectorArgumentResolver::class.java)
+        .resolve(this.source)
+        .first()
+
+/**
+ * Retrieves an integer argument from the command context.
+ * Throws an exception if the argument is not found or not an integer.
+ * @return The integer value of the argument.
+ */
+fun CommandContext<CommandSourceStack>.getIntArgument(name: String): Int =
+    IntegerArgumentType.getInteger(this, name)
 
 /**
  * Executes the command only if the sender is a player.
