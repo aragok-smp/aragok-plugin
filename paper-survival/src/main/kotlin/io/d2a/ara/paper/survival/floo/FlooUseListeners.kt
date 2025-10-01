@@ -149,18 +149,43 @@ class FlooUseListeners(
             return player.sendRichMessage("<red>The connection is invalid")
         }
 
+        // we can remove this item since we are ready to teleport!
+        event.itemDrop.setCanPlayerPickup(false)
+        event.itemDrop.setCanMobPickup(false)
+
+        val destinationLocation = destinationBlock.location.clone().add(0.5, 1.0, 0.5)
+
         // now we can actually teleport the player :)
         // there should appear a lightning strike at the source and destination
-        playTeleportEffects(player.location.block.location.clone().add(0.5, 0.0, 0.5))
-        playTeleportEffects(destinationBlock.location.add(0.5, 0.0, 0.5))
+        playTeleportEffects(player.location)
+        playTeleportEffects(destinationLocation)
 
         player.sendActionBar(
             Component.text("Preparing to teleport to ", NamedTextColor.GRAY)
                 .append(Component.text(destinationName, NamedTextColor.YELLOW))
                 .append(Component.text("...", NamedTextColor.GRAY))
         )
-        player.teleportAsync(destinationBlock.location.add(0.5, 1.0, 0.5))
-        event.itemDrop.remove()
+        player.teleportAsync(destinationLocation)
+            .thenAccept { result ->
+                if (result) {
+                    event.itemDrop.remove() // remove the dropped item
+
+                    player.sendActionBar(
+                        Component.text("Teleported to ", NamedTextColor.GRAY)
+                            .append(Component.text(destinationName, NamedTextColor.YELLOW))
+                    )
+                } else {
+                    // allow the player to pick the item back up
+                    event.itemDrop.setCanPlayerPickup(true)
+                    event.itemDrop.setCanMobPickup(true)
+
+                    player.sendActionBar(
+                        Component.text("Teleportation to ", NamedTextColor.RED)
+                            .append(Component.text(destinationName, NamedTextColor.YELLOW))
+                            .append(Component.text(" failed.", NamedTextColor.RED))
+                    )
+                }
+            }
     }
 
     @EventHandler
@@ -177,15 +202,7 @@ class FlooUseListeners(
 
     fun playTeleportEffects(location: Location) {
         location.world.strikeLightning(location)
-        location.world.spawnParticle(
-            Particle.SOUL_FIRE_FLAME,
-            location.add(0.5, 0.5, 0.5),
-            50,
-            0.5,
-            0.5,
-            0.5,
-            0.2
-        )
+        location.world.spawnParticle(Particle.SOUL_FIRE_FLAME, location, 50, 0.5, 0.5, 0.5, 0.2)
     }
 
 
