@@ -15,6 +15,8 @@ class RestrictionCommand(
     val dimensionRestriction: DimensionRestriction
 ) : CommandBuilder {
 
+    override fun description() = "Manage border and dimension restrictions"
+
     override fun build(): LiteralCommandNode<CommandSourceStack> =
         Commands.literal("restriction")
             .requiresInternalPermission("restriction")

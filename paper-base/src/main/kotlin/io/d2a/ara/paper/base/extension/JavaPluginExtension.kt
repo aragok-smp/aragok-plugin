@@ -65,8 +65,9 @@ fun JavaPlugin.registerCommands(vararg builders: CommandBuilder) =
     withCommandRegistrar {
         builders.forEach { builder ->
             val node = builder.build()
-            logger.info("Registering command: ${node.literal}")
-            register(node)
+            val description = builder.description()
+            logger.info("Registering command: ${node.literal} ($description)")
+            register(node, description)
         }
     }
 

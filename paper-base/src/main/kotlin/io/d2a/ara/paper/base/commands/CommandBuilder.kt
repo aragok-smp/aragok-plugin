@@ -7,4 +7,6 @@ interface CommandBuilder {
 
     fun build(): LiteralCommandNode<CommandSourceStack>
 
+    fun description(): String = "No description provided"
+
 }

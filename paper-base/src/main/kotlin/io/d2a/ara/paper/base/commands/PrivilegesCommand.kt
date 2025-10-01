@@ -38,6 +38,36 @@ class PrivilegesCommand(
         private const val MAX_PRIVILEGE_DURATION_MINUTES = 15
     }
 
+    override fun description(): String = "Grant or revoke temporary super-user privileges"
+
+    override fun build(): LiteralCommandNode<CommandSourceStack> =
+        Commands.literal("privileges")
+            .requiresPermission(USE_PERMISSION)
+            .executesPlayer { _, player ->
+                execute(player, player, MAX_PRIVILEGE_DURATION_MINUTES)
+            }
+            .then(
+                Commands.argument("player", ArgumentTypes.player())
+                    .requiresPermission(USE_OTHER_PERMISSION)
+                    .executes { ctx ->
+                        val target = ctx.getPlayerArgument("player")
+                        execute(ctx.source.sender, target, MAX_PRIVILEGE_DURATION_MINUTES)
+                    }
+                    .then(
+                        Commands.argument(
+                            "duration",
+                            IntegerArgumentType.integer(1, MAX_PRIVILEGE_DURATION_MINUTES)
+                        )
+                            .executes { ctx ->
+                                val target = ctx.getPlayerArgument("player")
+                                val duration = ctx.getIntArgument("duration")
+                                execute(ctx.source.sender, target, duration)
+                            }
+                    )
+            )
+            .build()
+
+
     private fun execute(sender: CommandSender, target: Player, durationMinutes: Int): Int {
         val user = luckPerms.playerAdapter().getUser(target)
         val existingNode = findExistingSuperUserGroupNode(user)
@@ -120,34 +150,6 @@ class PrivilegesCommand(
                 "<green>You have been granted temporary admin privileges for <white>$durationMinutes minutes<green>!"
             )
         }
-    }
-
-    override fun build(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("privileges")
-            .requiresPermission(USE_PERMISSION)
-            .executesPlayer { _, player ->
-                execute(player, player, MAX_PRIVILEGE_DURATION_MINUTES)
-            }
-            .then(
-                Commands.argument("player", ArgumentTypes.player())
-                    .requiresPermission(USE_OTHER_PERMISSION)
-                    .executes { ctx ->
-                        val target = ctx.getPlayerArgument("player")
-                        execute(ctx.source.sender, target, MAX_PRIVILEGE_DURATION_MINUTES)
-                    }
-                    .then(
-                        Commands.argument(
-                            "duration",
-                            IntegerArgumentType.integer(1, MAX_PRIVILEGE_DURATION_MINUTES)
-                        )
-                            .executes { ctx ->
-                                val target = ctx.getPlayerArgument("player")
-                                val duration = ctx.getIntArgument("duration")
-                                execute(ctx.source.sender, target, duration)
-                            }
-                    )
-            )
-            .build()
     }
 
     private fun uuidOrNull(sender: CommandSender?): UUID? =

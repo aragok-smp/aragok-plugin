@@ -3,6 +3,7 @@ package io.d2a.ara.paper.survival.floo
 import io.d2a.ara.paper.base.custom.CustomItems
 import io.d2a.ara.paper.base.custom.CustomItems.Companion.NAMESPACE
 import io.d2a.ara.paper.base.extension.*
+import net.kyori.adventure.sound.Sound.Emitter
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
@@ -35,6 +36,7 @@ class FlooUseListeners(
         val FLOO_POWDER_DESTINATION_Z = NamespacedKey(NAMESPACE, "floo_destination_z")
         val FLOO_POWDER_DESTINATION_WORLD = NamespacedKey(NAMESPACE, "floo_destination_world")
 
+        const val XP_PER_REGISTRATION = 0.5
     }
 
     fun isPoweredFlooPowder(stack: ItemStack?) = CustomItems.isCustomItem(stack, FlooItem.POWDER_ITEM_MODEL)
@@ -91,7 +93,15 @@ class FlooUseListeners(
 
         val campfire = clicked.state as? Campfire ?: return
         val flooNetworkName = campfire.persistentDataContainer.getString(FLOO_POWDER_DESTINATION_NAME)
-            ?: return event.player.sendRichMessage("<red>This soul fire is not connected to the Floo Network.")
+            ?: return event.player.fail("This soul fire is not connected to the Floo Network.")
+
+        val currentLevel = event.player.level
+        val cost = (XP_PER_REGISTRATION * item.amount).toInt().coerceAtLeast(1)
+        if (currentLevel < cost) {
+            val remaining = cost - currentLevel
+            return event.player.fail("You need $cost levels to register this connection (need $remaining more).")
+        }
+        event.player.level = currentLevel - cost
 
         val powderItem = FlooItem.toPowderItem().apply {
             amount = item.amount
@@ -114,6 +124,12 @@ class FlooUseListeners(
         }
 
         event.player.inventory.setItem(hand, powderItem)
+        event.player.playSound(
+            Sound.BLOCK_AMETHYST_BLOCK_CHIME.toAdventure()
+                .volume(1f)
+                .pitch(1.5f)
+                .build(), Emitter.self()
+        )
 
         val location = clicked.location.toCenterLocation()
         clicked.world.spawnParticle(Particle.SOUL_FIRE_FLAME, location, 30, 0.5, 0.5, 0.5, 0.1)
@@ -139,16 +155,16 @@ class FlooUseListeners(
         val destinationWorldUID = pdc.getString(FLOO_POWDER_DESTINATION_WORLD) ?: return
 
         val world = Bukkit.getWorld(UUID.fromString(destinationWorldUID))
-            ?: return player.sendRichMessage("<red>The destination world was not found.")
+            ?: return player.fail("The destination world was not found.")
 
         // get target soul fire and make sure it is valid and has the same name
         val destinationBlock = world.getBlockAt(destinationX, destinationY, destinationZ)
         val destinationCampfire = destinationBlock.state as? Campfire
-            ?: return player.sendRichMessage("<red>The destination was not found.")
+            ?: return player.fail("The destination was not found.")
         val actualName = destinationCampfire.persistentDataContainer.getString(FLOO_POWDER_DESTINATION_NAME)
-            ?: return player.sendRichMessage("<red>The destination is not connected to the Floo Network.")
+            ?: return player.fail("The destination is not connected to the Floo Network.")
         if (destinationName != actualName) {
-            return player.sendRichMessage("<red>The connection is invalid")
+            return player.fail("The destination has changed and is no longer valid.")
         }
 
         // we can remove this item since we are ready to teleport!
@@ -157,16 +173,12 @@ class FlooUseListeners(
 
         val destinationLocation = destinationBlock.location.clone().add(0.5, 1.0, 0.5)
 
-        // now we can actually teleport the player :)
-        // there should appear a lightning strike at the source and destination
-        playTeleportEffects(player.location)
-        playTeleportEffects(destinationLocation)
-
         player.sendActionBar(
             Component.text("Preparing to teleport to ", NamedTextColor.GRAY)
                 .append(Component.text(destinationName, NamedTextColor.YELLOW))
                 .append(Component.text("...", NamedTextColor.GRAY))
         )
+
         player.teleportAsync(destinationLocation)
             .thenAccept { result ->
                 if (result) {
@@ -176,6 +188,9 @@ class FlooUseListeners(
                         Component.text("Teleported to ", NamedTextColor.GRAY)
                             .append(Component.text(destinationName, NamedTextColor.YELLOW))
                     )
+
+                    playTeleportEffects(player.location)
+                    playTeleportEffects(destinationLocation)
                 } else {
                     // allow the player to pick the item back up
                     event.itemDrop.setCanPlayerPickup(true)
@@ -206,6 +221,5 @@ class FlooUseListeners(
         location.world.strikeLightning(location)
         location.world.spawnParticle(Particle.SOUL_FIRE_FLAME, location, 50, 0.5, 0.5, 0.5, 0.2)
     }
-
 
 }

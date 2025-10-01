@@ -1,8 +1,7 @@
 package io.d2a.ara.paper.survival.restriction
 
 import io.d2a.ara.paper.base.configuration.Configuration
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.NamedTextColor
+import io.d2a.ara.paper.base.extension.fail
 import org.bukkit.World.Environment
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -28,14 +27,14 @@ class DimensionRestriction(
         if (event.to.world.environment == Environment.NETHER) {
             if (netherEnabled.get() != true) {
                 event.isCancelled = true
-                event.player.sendActionBar(Component.text("The Nether is currently disabled.", NamedTextColor.RED))
+                event.player.fail("The Nether is currently disabled.")
             }
         } else if (event.to.world.environment == Environment.THE_END) {
             if (endEnabled.get() != true) {
                 event.isCancelled = true
 
                 event.player.apply {
-                    sendActionBar(Component.text("The End is currently disabled.", NamedTextColor.RED))
+                    fail("The End is currently disabled.")
 
                     // push player up
                     velocity = velocity.setY(1.0)
@@ -43,13 +42,7 @@ class DimensionRestriction(
                     // also add fire resistance temporarily in case they land in the lava
                     if (!hasPotionEffect(PotionEffectType.FIRE_RESISTANCE)) {
                         addPotionEffect(
-                            PotionEffect(
-                                PotionEffectType.FIRE_RESISTANCE,
-                                20 * 10, // 10 seconds
-                                1,
-                                false,
-                                false
-                            )
+                            PotionEffect(PotionEffectType.FIRE_RESISTANCE, 20 * 10, 1, false, false)
                         )
                     }
                 }
