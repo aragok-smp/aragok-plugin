@@ -72,3 +72,6 @@ fun <T : ArgumentBuilder<CommandSourceStack, T>> T.executesPlayer(
 fun <T : ArgumentBuilder<CommandSourceStack, T>> T.requiresPermission(permission: String): T = this.requires { ctx ->
     ctx.sender.hasPermission(permission)
 }
+
+fun <T : ArgumentBuilder<CommandSourceStack, T>> T.requiresInternalPermission(vararg keys: String): T =
+    this.requiresPermission(keys.joinToString(".", prefix = "aragok.").lowercase())

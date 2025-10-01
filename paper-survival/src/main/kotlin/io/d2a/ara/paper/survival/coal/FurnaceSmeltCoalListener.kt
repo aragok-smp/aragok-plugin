@@ -1,5 +1,6 @@
 package io.d2a.ara.paper.survival.coal
 
+import io.d2a.ara.paper.base.custom.CustomItems.Companion.NAMESPACE
 import org.bukkit.NamespacedKey
 import org.bukkit.block.Block
 import org.bukkit.block.TileState
@@ -14,7 +15,7 @@ import java.util.concurrent.ThreadLocalRandom
 class FurnaceSmeltCoalListener : Listener {
 
     companion object {
-        val PDC_FURNACE_TYPE = NamespacedKey("aragokt", "enriched_furnace_type")
+        val PDC_FURNACE_TYPE = NamespacedKey(NAMESPACE, "enriched_furnace_type")
     }
 
     // FurnaceBurnEvent: used to change burn time (the time the fuel lasts)

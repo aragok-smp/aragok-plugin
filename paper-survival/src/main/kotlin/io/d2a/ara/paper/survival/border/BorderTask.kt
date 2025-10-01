@@ -1,34 +1,22 @@
 package io.d2a.ara.paper.survival.border
 
+import io.d2a.ara.paper.base.configuration.Configuration
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.World
-import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.plugin.Plugin
 import org.bukkit.scheduler.BukkitTask
 import java.io.Closeable
-import java.io.File
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.logging.Level
 
 class BorderTask(
     private val plugin: Plugin,
     private val clock: Clock = Clock.systemDefaultZone()
 ) : Runnable, Closeable {
 
-    private val stateFile: File = plugin.dataFolder
-        .also { it.mkdirs() } // create the plugin folder if it doesn't exist
-        .resolve("state.yaml")
-        .apply {
-            if (!exists()) {
-                runCatching { createNewFile() }
-                    .onFailure { plugin.logger.log(Level.SEVERE, "Failed to create state file", it) }
-            }
-        }
-
-    private val state: YamlConfiguration = YamlConfiguration.loadConfiguration(stateFile)
+    private val state = Configuration(plugin, "border_state.yaml", autoSave = true)
 
     private val task: BukkitTask
 
@@ -83,13 +71,7 @@ class BorderTask(
 
     private fun advance(today: LocalDate) {
         plugin.server.worlds.forEach(this::advanceBorder)
-
-        state.set(LAST_ADVANCE_KEY, today.toString())
-        runCatching { state.save(stateFile) }
-            .onFailure {
-                plugin.logger.log(Level.SEVERE, "Failed to save border state to file: ${stateFile.path}", it)
-                this@BorderTask.close() // disable the task to prevent repeated advance attempts
-            }
+        state[LAST_ADVANCE_KEY] = today.toString()
     }
 
     private fun advanceBorder(world: World) {

@@ -14,7 +14,7 @@ class CustomItems {
         /**
          * Namespace for all custom items in this plugin.
          */
-        const val NAMESPACE = "aragokt"
+        const val NAMESPACE = "aragok"
 
         /**
          * Performant check if the given item stack is a custom item by checking its item model key.

@@ -29,10 +29,10 @@ class PrivilegesCommand(
     data class PrivilegeInfo(val approver: UUID?)
 
     companion object {
-        const val INFO_KEY = "aragokt:info"
+        const val INFO_KEY = "aragok-base:info"
 
-        const val USE_PERMISSION = "aragokt.privileges.use"
-        const val USE_OTHER_PERMISSION = "aragokt.privileges.use.other"
+        const val USE_PERMISSION = "aragok.privileges.use"
+        const val USE_OTHER_PERMISSION = "aragok.privileges.use.other"
 
         const val SUPER_USER_GROUP_NAME = "su"
         private const val MAX_PRIVILEGE_DURATION_MINUTES = 15

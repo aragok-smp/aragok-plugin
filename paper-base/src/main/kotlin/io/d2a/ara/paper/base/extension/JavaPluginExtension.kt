@@ -43,6 +43,10 @@ fun JavaPlugin.registerEvents(vararg listeners: Listener) =
         server.pluginManager.registerEvents(listener, this)
     }
 
+fun <T : Listener> JavaPlugin.withListenerRegistration(listener: T): T = listener.also {
+    server.pluginManager.registerEvents(it, this)
+}
+
 /**
  * Registers multiple commands at once.
  */
