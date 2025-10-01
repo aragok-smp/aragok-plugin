@@ -6,7 +6,12 @@ import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
+import org.bukkit.Sound
 import org.bukkit.entity.Player
+
+// now it technically does not belong here but who cares
+val VILLAGER_NO_SOUND = Sound.ENTITY_VILLAGER_NO.toAdventure()
+    .build()
 
 /**
  * Sends a failure message to the command sender, prefixed with red color.

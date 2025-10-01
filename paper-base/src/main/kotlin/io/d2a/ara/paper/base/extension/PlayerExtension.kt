@@ -20,7 +20,7 @@ fun Player.success(message: String, sound: Sound? = null) =
     this.sendMessage(message, NamedTextColor.GREEN, sound)
 
 
-private fun Player.sendActionBar(message: String, color: NamedTextColor, sound: Sound?) = {
+private fun Player.sendActionBar(message: String, color: NamedTextColor, sound: Sound?) {
     this.sendActionBar(Component.text(message, color))
     if (sound != null) {
         this.playSound(sound, Emitter.self())

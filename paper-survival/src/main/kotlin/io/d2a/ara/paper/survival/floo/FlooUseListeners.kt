@@ -93,13 +93,16 @@ class FlooUseListeners(
 
         val campfire = clicked.state as? Campfire ?: return
         val flooNetworkName = campfire.persistentDataContainer.getString(FLOO_POWDER_DESTINATION_NAME)
-            ?: return event.player.fail("This soul fire is not connected to the Floo Network.")
+            ?: return event.player.failActionBar("This soul fire is not connected to the Floo Network.")
 
         val currentLevel = event.player.level
         val cost = (XP_PER_REGISTRATION * item.amount).toInt().coerceAtLeast(1)
         if (currentLevel < cost) {
             val remaining = cost - currentLevel
-            return event.player.fail("You need $cost levels to register this connection (need $remaining more).")
+            return event.player.failActionBar(
+                "You need $cost levels to register this connection (need $remaining more).",
+                sound = VILLAGER_NO_SOUND
+            )
         }
         event.player.level = currentLevel - cost
 
@@ -155,16 +158,19 @@ class FlooUseListeners(
         val destinationWorldUID = pdc.getString(FLOO_POWDER_DESTINATION_WORLD) ?: return
 
         val world = Bukkit.getWorld(UUID.fromString(destinationWorldUID))
-            ?: return player.fail("The destination world was not found.")
+            ?: return player.failActionBar("The destination world was not found.")
 
         // get target soul fire and make sure it is valid and has the same name
         val destinationBlock = world.getBlockAt(destinationX, destinationY, destinationZ)
         val destinationCampfire = destinationBlock.state as? Campfire
-            ?: return player.fail("The destination was not found.")
+            ?: return player.failActionBar("The destination was not found.")
         val actualName = destinationCampfire.persistentDataContainer.getString(FLOO_POWDER_DESTINATION_NAME)
-            ?: return player.fail("The destination is not connected to the Floo Network.")
+            ?: return player.failActionBar("The destination is not connected to the Floo Network.")
         if (destinationName != actualName) {
-            return player.fail("The destination has changed and is no longer valid.")
+            return player.failActionBar(
+                "The destination has changed and is no longer valid.",
+                sound = VILLAGER_NO_SOUND
+            )
         }
 
         // we can remove this item since we are ready to teleport!

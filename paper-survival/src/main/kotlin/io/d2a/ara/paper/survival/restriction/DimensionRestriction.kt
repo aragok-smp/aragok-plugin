@@ -1,7 +1,8 @@
 package io.d2a.ara.paper.survival.restriction
 
 import io.d2a.ara.paper.base.configuration.Configuration
-import io.d2a.ara.paper.base.extension.fail
+import io.d2a.ara.paper.base.extension.VILLAGER_NO_SOUND
+import io.d2a.ara.paper.base.extension.failActionBar
 import org.bukkit.World.Environment
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -27,14 +28,14 @@ class DimensionRestriction(
         if (event.to.world.environment == Environment.NETHER) {
             if (netherEnabled.get() != true) {
                 event.isCancelled = true
-                event.player.fail("The Nether is currently disabled.")
+                event.player.failActionBar("The Nether is currently disabled.", sound = VILLAGER_NO_SOUND)
             }
         } else if (event.to.world.environment == Environment.THE_END) {
             if (endEnabled.get() != true) {
                 event.isCancelled = true
 
                 event.player.apply {
-                    fail("The End is currently disabled.")
+                    failActionBar("The End is currently disabled.", sound = VILLAGER_NO_SOUND)
 
                     // push player up
                     velocity = velocity.setY(1.0)
