@@ -9,6 +9,9 @@ import io.d2a.ara.paper.survival.coal.CoalType
 import io.d2a.ara.paper.survival.coal.FurnaceSmeltCoalListener
 import io.d2a.ara.paper.survival.devnull.DevNullItem
 import io.d2a.ara.paper.survival.devnull.ItemPickupDevNullListener
+import io.d2a.ara.paper.survival.floo.FlooItem
+import io.d2a.ara.paper.survival.floo.FlooUseListeners
+import io.d2a.ara.paper.survival.floo.WitchDropGlimmerListener
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -17,23 +20,30 @@ class AragokPaperSurvival : JavaPlugin() {
     private var borderTask: BorderTask? = null
 
     override fun onEnable() {
-        borderTask = BorderTask(plugin = this)
-
-        withCommandRegistrar {
-            register(TestAdvanceCommand(borderTask).build())
-        }
-
-        registerCoalFeature()
-        registerDevNullFeature()
-
+        // start activity service
         val activityService = getService<ActivityService>()
             ?: return disableWithError("ActivityService not found")
         logger.info("Found activity service: $activityService")
 
+        // register activity listener which shows the activity state in the action bar
+        activityService.registerListener(ActivityChangedNotifier())
+
         val sleepListener = EnterBedSleepListener()
         activityService.registerListener(sleepListener)
-        activityService.registerListener(ActivityChangedNotifier())
         registerEvents(sleepListener)
+        logger.info("Registered sleep listener to activity service")
+        // end activity service
+
+        // border task
+        borderTask = BorderTask(plugin = this)
+
+        // commands
+        registerCommands(TestAdvanceCommand(borderTask))
+
+        // features
+        registerCoalFeature()
+        registerDevNullFeature()
+        registerFlooFeature()
 
         logger.info("Enabled aragok-survival")
     }
@@ -56,6 +66,16 @@ class AragokPaperSurvival : JavaPlugin() {
         DevNullItem.registerRecipe(this)
 
         registerEvents(ItemPickupDevNullListener())
+    }
+
+    fun registerFlooFeature() {
+        logger.info("Registering floo items and recipe...")
+        FlooItem.registerRecipe(this)
+
+        registerEvents(
+            FlooUseListeners(logger),
+            WitchDropGlimmerListener()
+        )
     }
 
 }

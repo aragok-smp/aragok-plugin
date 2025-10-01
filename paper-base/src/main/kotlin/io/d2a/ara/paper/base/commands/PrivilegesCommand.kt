@@ -2,13 +2,15 @@ package io.d2a.ara.paper.base.commands
 
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.IntegerArgumentType
-import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.tree.LiteralCommandNode
+import io.d2a.ara.paper.base.extension.executesPlayer
+import io.d2a.ara.paper.base.extension.getIntArgument
+import io.d2a.ara.paper.base.extension.getPlayerArgument
+import io.d2a.ara.paper.base.extension.requiresPermission
 import io.d2a.ara.paper.base.flair.playerAdapter
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
-import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import net.luckperms.api.LuckPerms
 import net.luckperms.api.model.user.User
 import net.luckperms.api.node.NodeType
@@ -17,12 +19,12 @@ import net.luckperms.api.node.types.InheritanceNode
 import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.entity.Player
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 class PrivilegesCommand(
     private val luckPerms: LuckPerms
-) {
+) : CommandBuilder {
 
     data class PrivilegeInfo(val approver: UUID?)
 
@@ -36,7 +38,7 @@ class PrivilegesCommand(
         private const val MAX_PRIVILEGE_DURATION_MINUTES = 15
     }
 
-    private fun execute(sender: CommandSender, target: Player, durationMinutes: Int) {
+    private fun execute(sender: CommandSender, target: Player, durationMinutes: Int): Int {
         val user = luckPerms.playerAdapter().getUser(target)
         val existingNode = findExistingSuperUserGroupNode(user)
 
@@ -45,6 +47,8 @@ class PrivilegesCommand(
         } else {
             grantPrivileges(sender, target, user, durationMinutes)
         }
+
+        return Command.SINGLE_SUCCESS
     }
 
     /**
@@ -77,7 +81,6 @@ class PrivilegesCommand(
             sender.sendRichMessage("<green>Your existing super-user privileges have been removed.")
         }
     }
-
 
     /**
      * Grants temporary super-user privileges to the target player.
@@ -119,51 +122,32 @@ class PrivilegesCommand(
         }
     }
 
-    fun build(): LiteralCommandNode<CommandSourceStack> {
-        val root: LiteralArgumentBuilder<CommandSourceStack> = Commands.literal("privileges")
-            .requires(Commands.restricted { source ->
-                source.sender.hasPermission(USE_PERMISSION)
-            })
-
-        root.executes { ctx ->
-            val sender = ctx.source.sender
-            val player = sender as? Player ?: run {
-                sender.sendRichMessage("<red>error: <white>Console must specify a target player.")
-                return@executes Command.SINGLE_SUCCESS
+    override fun build(): LiteralCommandNode<CommandSourceStack> {
+        return Commands.literal("privileges")
+            .requiresPermission(USE_PERMISSION)
+            .executesPlayer { _, player ->
+                execute(player, player, MAX_PRIVILEGE_DURATION_MINUTES)
             }
-            execute(player, player, MAX_PRIVILEGE_DURATION_MINUTES)
-            Command.SINGLE_SUCCESS
-        }
-
-        root.then(
-            Commands.argument("player", ArgumentTypes.player())
-                .requires(Commands.restricted { source ->
-                    source.sender.hasPermission(USE_OTHER_PERMISSION)
-                })
-                .executes { ctx ->
-                    val target = ctx.getArgument("player", PlayerSelectorArgumentResolver::class.java)
-                        .resolve(ctx.source)
-                        .first()
-                    execute(ctx.source.sender, target, MAX_PRIVILEGE_DURATION_MINUTES)
-                    Command.SINGLE_SUCCESS
-                }
-                .then(
-                    Commands.argument(
-                        "duration",
-                        IntegerArgumentType.integer(1, MAX_PRIVILEGE_DURATION_MINUTES)
+            .then(
+                Commands.argument("player", ArgumentTypes.player())
+                    .requiresPermission(USE_OTHER_PERMISSION)
+                    .executes { ctx ->
+                        val target = ctx.getPlayerArgument("player")
+                        execute(ctx.source.sender, target, MAX_PRIVILEGE_DURATION_MINUTES)
+                    }
+                    .then(
+                        Commands.argument(
+                            "duration",
+                            IntegerArgumentType.integer(1, MAX_PRIVILEGE_DURATION_MINUTES)
+                        )
+                            .executes { ctx ->
+                                val target = ctx.getPlayerArgument("player")
+                                val duration = ctx.getIntArgument("duration")
+                                execute(ctx.source.sender, target, duration)
+                            }
                     )
-                        .executes { ctx ->
-                            val target = ctx.getArgument("player", PlayerSelectorArgumentResolver::class.java)
-                                .resolve(ctx.source)
-                                .first()
-                            val duration = IntegerArgumentType.getInteger(ctx, "duration")
-                            execute(ctx.source.sender, target, duration)
-                            Command.SINGLE_SUCCESS
-                        }
-                )
-        )
-
-        return root.build()
+            )
+            .build()
     }
 
     private fun uuidOrNull(sender: CommandSender?): UUID? =

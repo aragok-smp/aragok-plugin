@@ -10,8 +10,10 @@ interface ActivityService {
         ACTIVE;
     }
 
-    @FunctionalInterface
-    interface ActivityChangedListener {
+    /**
+     * A callback interface for listening to player activity state changes.
+     */
+    fun interface ActivityChangedListener {
         fun onActivityChanged(player: Player, oldState: ActivityState, newState: ActivityState)
     }
 

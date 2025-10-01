@@ -1,5 +1,8 @@
 package io.d2a.ara.paper.base.extension
 
+import com.mojang.brigadier.tree.LiteralCommandNode
+import io.d2a.ara.paper.base.commands.CommandBuilder
+import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import org.bukkit.event.Listener
@@ -40,6 +43,32 @@ fun JavaPlugin.registerEvents(vararg listeners: Listener) =
         server.pluginManager.registerEvents(listener, this)
     }
 
+/**
+ * Registers multiple commands at once.
+ */
+fun JavaPlugin.registerCommands(vararg nodes: LiteralCommandNode<CommandSourceStack>) =
+    withCommandRegistrar {
+        nodes.forEach { node ->
+            logger.info("Registering command: ${node.literal}")
+            register(node)
+        }
+    }
+
+/**
+ * Registers multiple commands using command builders at once.
+ */
+fun JavaPlugin.registerCommands(vararg builders: CommandBuilder) =
+    withCommandRegistrar {
+        builders.forEach { builder ->
+            val node = builder.build()
+            logger.info("Registering command: ${node.literal}")
+            register(node)
+        }
+    }
+
+/**
+ * Closes a [Closeable] resource quietly, logging any exceptions that occur during the close operation.
+ */
 fun JavaPlugin.closeQuietly(resource: Closeable?, name: String) =
     resource?.runCatching { close() }
         ?.onFailure { logger.log(Level.WARNING, "Failed to close $name", it) }

@@ -1,7 +1,7 @@
 package io.d2a.ara.paper.survival.devnull
 
-import io.d2a.ara.paper.base.extension.noItalic
-import io.d2a.ara.paper.survival.coal.NAMESPACE
+import io.d2a.ara.paper.base.custom.CustomItems.Companion.NAMESPACE
+import io.d2a.ara.paper.base.extension.italic
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -27,7 +27,7 @@ class DevNullItem {
 
         fun toItem(): ItemStack = ItemStack.of(Material.BLACK_BUNDLE).apply {
             itemMeta = itemMeta?.apply {
-                displayName(Component.text("/dev/null").noItalic())
+                displayName(Component.text("/dev/null").italic(false))
                 setRarity(ItemRarity.RARE)
                 itemModel = ITEM_MODEL
                 persistentDataContainer.set(

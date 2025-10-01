@@ -1,6 +1,9 @@
 package io.d2a.ara.paper.survival.coal
 
-import io.d2a.ara.paper.base.extension.noItalic
+import io.d2a.ara.paper.base.custom.CustomItems.Companion.NAMESPACE
+import io.d2a.ara.paper.base.extension.getEnum
+import io.d2a.ara.paper.base.extension.italic
+import io.d2a.ara.paper.base.extension.setEnum
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -8,10 +11,7 @@ import org.bukkit.inventory.ItemRarity
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.RecipeChoice
 import org.bukkit.inventory.ShapelessRecipe
-import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.Plugin
-
-const val NAMESPACE = "aragokt"
 
 /**
  * Specialized types of coal with different boosts to smelting and chances to duplicate
@@ -56,14 +56,10 @@ enum class CoalType(
      */
     fun toItem(): ItemStack = ItemStack.of(Material.COAL).apply {
         itemMeta = itemMeta?.apply {
-            displayName(Component.text(this@CoalType.displayName).noItalic())
+            displayName(Component.text(this@CoalType.displayName).italic(false))
             setRarity(this@CoalType.rarity)
             itemModel = this@CoalType.itemModel
-            persistentDataContainer.set(
-                PDC_KEY_COAL_TYPE,
-                PersistentDataType.BYTE,
-                this@CoalType.ordinal.toByte()
-            )
+            persistentDataContainer.setEnum(PDC_KEY_COAL_TYPE, this@CoalType)
         }
     }
 
@@ -79,10 +75,7 @@ enum class CoalType(
             if (item?.type != Material.COAL || !item.hasItemMeta()) {
                 return null
             }
-            val ordinal = item.itemMeta?.persistentDataContainer?.run {
-                get(PDC_KEY_COAL_TYPE, PersistentDataType.BYTE)
-            } ?: return null
-            return entries.getOrNull(ordinal.toInt())
+            return item.itemMeta.persistentDataContainer.getEnum<CoalType>(PDC_KEY_COAL_TYPE)
         }
 
         /**
