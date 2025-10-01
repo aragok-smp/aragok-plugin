@@ -122,6 +122,8 @@ class FlooUseListeners(
     @EventHandler
     fun onItemDrop(event: PlayerDropItemEvent) {
         val item = event.itemDrop.itemStack
+        // only allow dropping a single item
+        if (item.amount != 1) return
         if (!isPoweredFlooPowder(item)) return
 
         val pdc = item.itemMeta?.persistentDataContainer ?: return
