@@ -12,12 +12,12 @@ import org.bukkit.plugin.Plugin
 class FlooItem {
 
     companion object {
-        val GLIMMERS_ITEM_MODEL = NamespacedKey(NAMESPACE, "floo_glimmers")
+        val ESSENCE_ITEM_MODEL = NamespacedKey(NAMESPACE, "floo_essence")
         val UNUSED_POWDER_ITEM_MODEL = NamespacedKey(NAMESPACE, "unused_floo_powder")
         val POWDER_ITEM_MODEL = NamespacedKey(NAMESPACE, "floo_powder")
 
-        fun toGlimmersItem() =
-            CustomItems.createCustomItem(GLIMMERS_ITEM_MODEL, "Floo Glimmers", rarity = ItemRarity.UNCOMMON)
+        fun toEssenceItem() =
+            CustomItems.createCustomItem(ESSENCE_ITEM_MODEL, "Floo Essence", rarity = ItemRarity.UNCOMMON)
 
         fun toUnusedPowderItem() =
             CustomItems.createCustomItem(UNUSED_POWDER_ITEM_MODEL, "Unused Floo Powder", rarity = ItemRarity.RARE)
@@ -26,7 +26,7 @@ class FlooItem {
             CustomItems.createCustomItem(POWDER_ITEM_MODEL, "Floo Powder", rarity = ItemRarity.EPIC)
 
         fun registerRecipe(plugin: Plugin) {
-            val glimmersItem = toGlimmersItem()
+            val essenceItem = toEssenceItem()
             val unusedPowderItem = toUnusedPowderItem()
 
             plugin.server.apply {
@@ -36,7 +36,7 @@ class FlooItem {
                         unusedPowderItem
                     )
                         .shape(" G ", "GPG", " G ")
-                        .setIngredient('G', RecipeChoice.ExactChoice(glimmersItem))
+                        .setIngredient('G', RecipeChoice.ExactChoice(essenceItem))
                         .setIngredient('P', Material.ENDER_PEARL)
                 )
             }

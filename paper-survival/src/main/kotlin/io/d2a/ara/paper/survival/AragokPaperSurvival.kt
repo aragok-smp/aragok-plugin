@@ -12,7 +12,7 @@ import io.d2a.ara.paper.survival.devnull.DevNullItem
 import io.d2a.ara.paper.survival.devnull.ItemPickupDevNullListener
 import io.d2a.ara.paper.survival.floo.FlooItem
 import io.d2a.ara.paper.survival.floo.FlooUseListeners
-import io.d2a.ara.paper.survival.floo.WitchDropGlimmerListener
+import io.d2a.ara.paper.survival.floo.WitchDropEssenceListener
 import io.d2a.ara.paper.survival.restriction.DimensionRestriction
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
 import org.bukkit.plugin.java.JavaPlugin
@@ -82,7 +82,7 @@ class AragokPaperSurvival : JavaPlugin() {
 
         registerEvents(
             FlooUseListeners(logger),
-            WitchDropGlimmerListener()
+            WitchDropEssenceListener()
         )
     }
 

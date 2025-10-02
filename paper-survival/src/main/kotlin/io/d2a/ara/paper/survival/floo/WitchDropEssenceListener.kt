@@ -7,9 +7,9 @@ import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.inventory.ItemStack
 import java.util.concurrent.ThreadLocalRandom
 
-class WitchDropGlimmerListener : Listener {
+class WitchDropEssenceListener : Listener {
 
-    val glimmerItem: ItemStack by lazy { FlooItem.toGlimmersItem() }
+    val essenceItem: ItemStack by lazy { FlooItem.toEssenceItem() }
 
     companion object {
         const val DROP_CHANCE = 0.5f
@@ -21,10 +21,10 @@ class WitchDropGlimmerListener : Listener {
 
         val random = ThreadLocalRandom.current()
         if (random.nextFloat() < DROP_CHANCE) {
-            event.drops.add(glimmerItem.clone())
+            event.drops.add(essenceItem.clone())
             // even more drops???
             if (random.nextFloat() < 0.5) {
-                event.drops.add(glimmerItem.clone())
+                event.drops.add(essenceItem.clone())
             }
         }
     }
