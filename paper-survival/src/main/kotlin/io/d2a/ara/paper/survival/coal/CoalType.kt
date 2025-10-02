@@ -1,7 +1,6 @@
 package io.d2a.ara.paper.survival.coal
 
 import io.d2a.ara.paper.base.custom.CustomItems.Companion.NAMESPACE
-import io.d2a.ara.paper.base.custom.RecipeDiscoveryService
 import io.d2a.ara.paper.base.extension.getEnum
 import io.d2a.ara.paper.base.extension.italic
 import io.d2a.ara.paper.base.extension.setEnum
@@ -10,9 +9,6 @@ import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemRarity
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.RecipeChoice
-import org.bukkit.inventory.ShapelessRecipe
-import org.bukkit.plugin.Plugin
 
 /**
  * Specialized types of coal with different boosts to smelting and chances to duplicate
@@ -77,56 +73,6 @@ enum class CoalType(
                 return null
             }
             return item.itemMeta.persistentDataContainer.getEnum<CoalType>(PDC_KEY_COAL_TYPE)
-        }
-
-        /**
-         * Registers the crafting recipes for the special coal items.
-         */
-        fun registerRecipes(plugin: Plugin, discoveryService: RecipeDiscoveryService) {
-            val enrichedCoalItem = ENRICHED.toItem()
-            val infusedCoalItem = INFUSED.toItem()
-            val superchargedCoalItem = SUPERCHARGED.toItem()
-
-            plugin.server.apply {
-                addRecipe(
-                    ShapelessRecipe(
-                        NamespacedKey(plugin, "enriched_coal"),
-                        enrichedCoalItem
-                    ).also { discoveryService.addRecipe(it.key) }
-                        .addIngredient(1, Material.COAL)
-                        .addIngredient(1, Material.IRON_NUGGET)
-                        .addIngredient(1, Material.IRON_NUGGET)
-                )
-                addRecipe(
-                    ShapelessRecipe(
-                        NamespacedKey(plugin, "infused_coal"),
-                        infusedCoalItem
-                    ).also { discoveryService.addRecipe(it.key) }
-                        .addIngredient(RecipeChoice.ExactChoice(enrichedCoalItem))
-                        .addIngredient(1, Material.BLAZE_POWDER)
-                        .addIngredient(1, Material.REDSTONE)
-                )
-                addRecipe(
-                    ShapelessRecipe(
-                        NamespacedKey(plugin, "supercharged_coal"),
-                        superchargedCoalItem
-                    ).also { discoveryService.addRecipe(it.key) }
-                        .addIngredient(RecipeChoice.ExactChoice(infusedCoalItem))
-                        .addIngredient(1, Material.END_CRYSTAL)
-                        .addIngredient(1, Material.AMETHYST_SHARD)
-                )
-
-                // charcoal variant -> enriched coal
-                addRecipe(
-                    ShapelessRecipe(
-                        NamespacedKey(plugin, "enriched_coal_from_charcoal"),
-                        enrichedCoalItem
-                    )
-                        .addIngredient(1, Material.CHARCOAL)
-                        .addIngredient(1, Material.IRON_NUGGET)
-                        .addIngredient(1, Material.IRON_NUGGET)
-                )
-            }
         }
     }
 

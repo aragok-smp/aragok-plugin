@@ -7,9 +7,7 @@ import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemRarity
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.ShapedRecipe
 import org.bukkit.persistence.PersistentDataType
-import org.bukkit.plugin.Plugin
 
 class DevNullItem {
 
@@ -34,24 +32,6 @@ class DevNullItem {
                     PDC_DEV_NULL_ENABLEMENT,
                     PersistentDataType.BYTE,
                     1
-                )
-            }
-        }
-
-        fun registerRecipe(plugin: Plugin) {
-            val devNullItem = toItem()
-
-            plugin.server.apply {
-                addRecipe(
-                    ShapedRecipe(
-                        NamespacedKey(plugin, "dev_null"),
-                        devNullItem
-                    )
-                        .shape("OEO", "HRH", "OEO")
-                        .setIngredient('O', Material.OBSIDIAN)
-                        .setIngredient('E', Material.ENDER_PEARL)
-                        .setIngredient('H', Material.HOPPER)
-                        .setIngredient('R', Material.REDSTONE)
                 )
             }
         }

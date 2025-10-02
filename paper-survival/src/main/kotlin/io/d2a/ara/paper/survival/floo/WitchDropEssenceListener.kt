@@ -1,5 +1,6 @@
 package io.d2a.ara.paper.survival.floo
 
+import org.bukkit.NamespacedKey
 import org.bukkit.entity.EntityType
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -7,7 +8,9 @@ import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.inventory.ItemStack
 import java.util.concurrent.ThreadLocalRandom
 
-class WitchDropEssenceListener : Listener {
+class WitchDropEssenceListener(
+    val unusedFlooPowderRecipeKey: NamespacedKey
+) : Listener {
 
     val essenceItem: ItemStack by lazy { FlooItem.toEssenceItem() }
 
@@ -26,6 +29,9 @@ class WitchDropEssenceListener : Listener {
             if (random.nextFloat() < 0.5) {
                 event.drops.add(essenceItem.clone())
             }
+
+            // if the player is a killer, also unlock the recipe
+            event.entity.killer?.discoverRecipe(unusedFlooPowderRecipeKey)
         }
     }
 
