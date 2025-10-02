@@ -1,6 +1,7 @@
 package io.d2a.ara.paper.survival
 
 import io.d2a.ara.paper.base.activity.ActivityService
+import io.d2a.ara.paper.base.custom.RecipeDiscoveryService
 import io.d2a.ara.paper.base.extension.*
 import io.d2a.ara.paper.survival.activity.ActivityChangedNotifier
 import io.d2a.ara.paper.survival.border.BorderTask
@@ -26,6 +27,10 @@ class AragokPaperSurvival : JavaPlugin() {
             ?: return disableWithError("ActivityService not found")
         logger.info("Found activity service: $activityService")
 
+        val discoveryService = getService<RecipeDiscoveryService>()
+            ?: return disableWithError("RecipeDiscoveryService not found")
+        logger.info("Found recipe discovery service: $discoveryService")
+
         // register activity listener which shows the activity state in the action bar
         activityService.registerListener(ActivityChangedNotifier())
 
@@ -44,7 +49,7 @@ class AragokPaperSurvival : JavaPlugin() {
         registerCommands(restrictionCommand)
 
         // features
-        registerCoalFeature()
+        registerCoalFeature(discoveryService)
         registerDevNullFeature()
         registerFlooFeature()
 
@@ -57,9 +62,9 @@ class AragokPaperSurvival : JavaPlugin() {
         logger.info("Disabled aragok-survival")
     }
 
-    fun registerCoalFeature() {
+    fun registerCoalFeature(discoveryService: RecipeDiscoveryService) {
         logger.info("Registering coal item and listener...")
-        CoalType.registerRecipes(this)
+        CoalType.registerRecipes(this, discoveryService)
 
         registerEvents(FurnaceSmeltCoalListener())
     }

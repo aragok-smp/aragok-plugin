@@ -1,6 +1,7 @@
 package io.d2a.ara.paper.survival.coal
 
 import io.d2a.ara.paper.base.custom.CustomItems.Companion.NAMESPACE
+import io.d2a.ara.paper.base.custom.RecipeDiscoveryService
 import io.d2a.ara.paper.base.extension.getEnum
 import io.d2a.ara.paper.base.extension.italic
 import io.d2a.ara.paper.base.extension.setEnum
@@ -81,7 +82,7 @@ enum class CoalType(
         /**
          * Registers the crafting recipes for the special coal items.
          */
-        fun registerRecipes(plugin: Plugin) {
+        fun registerRecipes(plugin: Plugin, discoveryService: RecipeDiscoveryService) {
             val enrichedCoalItem = ENRICHED.toItem()
             val infusedCoalItem = INFUSED.toItem()
             val superchargedCoalItem = SUPERCHARGED.toItem()
@@ -91,7 +92,7 @@ enum class CoalType(
                     ShapelessRecipe(
                         NamespacedKey(plugin, "enriched_coal"),
                         enrichedCoalItem
-                    )
+                    ).also { discoveryService.addRecipe(it.key) }
                         .addIngredient(1, Material.COAL)
                         .addIngredient(1, Material.IRON_NUGGET)
                         .addIngredient(1, Material.IRON_NUGGET)
@@ -100,7 +101,7 @@ enum class CoalType(
                     ShapelessRecipe(
                         NamespacedKey(plugin, "infused_coal"),
                         infusedCoalItem
-                    )
+                    ).also { discoveryService.addRecipe(it.key) }
                         .addIngredient(RecipeChoice.ExactChoice(enrichedCoalItem))
                         .addIngredient(1, Material.BLAZE_POWDER)
                         .addIngredient(1, Material.REDSTONE)
@@ -109,7 +110,7 @@ enum class CoalType(
                     ShapelessRecipe(
                         NamespacedKey(plugin, "supercharged_coal"),
                         superchargedCoalItem
-                    )
+                    ).also { discoveryService.addRecipe(it.key) }
                         .addIngredient(RecipeChoice.ExactChoice(infusedCoalItem))
                         .addIngredient(1, Material.END_CRYSTAL)
                         .addIngredient(1, Material.AMETHYST_SHARD)

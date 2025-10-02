@@ -4,7 +4,9 @@ import io.d2a.ara.paper.base.activity.ActivityService
 import io.d2a.ara.paper.base.activity.PlayerMovementActivity
 import io.d2a.ara.paper.base.commands.AwayCommand
 import io.d2a.ara.paper.base.commands.PrivilegesCommand
+import io.d2a.ara.paper.base.custom.PlayerJoinRecipeDiscoveryService
 import io.d2a.ara.paper.base.custom.PreventCraftingListener
+import io.d2a.ara.paper.base.custom.RecipeDiscoveryService
 import io.d2a.ara.paper.base.extension.*
 import io.d2a.ara.paper.base.flair.*
 import io.d2a.ara.paper.base.flair.listener.InjectFlairToChatListener
@@ -28,6 +30,9 @@ class AragokPaperBase : JavaPlugin() {
         registerEvents(activityService)
         registerService<ActivityService>(activityService)
         playerMovementActivity = activityService
+
+        val recipeDiscovery = withListenerRegistration(PlayerJoinRecipeDiscoveryService(logger))
+        registerService<RecipeDiscoveryService>(recipeDiscovery)
 
         registerCommands(
             PrivilegesCommand(luckPerms),
