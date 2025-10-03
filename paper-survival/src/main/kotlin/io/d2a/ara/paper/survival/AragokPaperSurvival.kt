@@ -8,6 +8,7 @@ import io.d2a.ara.paper.survival.coal.CoalType.*
 import io.d2a.ara.paper.survival.coal.FurnaceSmeltCoalListener
 import io.d2a.ara.paper.survival.coal.PickUpCoalEvent
 import io.d2a.ara.paper.survival.commands.RestrictionCommand
+import io.d2a.ara.paper.survival.commands.TrashCommand
 import io.d2a.ara.paper.survival.devnull.CraftBagListener
 import io.d2a.ara.paper.survival.devnull.DevNullItem
 import io.d2a.ara.paper.survival.devnull.ItemPickupDevNullListener
@@ -15,6 +16,7 @@ import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toEssenceItem
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toUnusedPowderItem
 import io.d2a.ara.paper.survival.floo.FlooUseListeners
 import io.d2a.ara.paper.survival.floo.WitchDropEssenceListener
+import io.d2a.ara.paper.survival.hopper.HopperFilterListener
 import io.d2a.ara.paper.survival.restriction.DimensionRestriction
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
 import org.bukkit.Material
@@ -57,12 +59,16 @@ class AragokPaperSurvival : JavaPlugin() {
         val restrictionCommand = RestrictionCommand(borderTask, dimensionRestriction)
 
         // commands
-        registerCommands(restrictionCommand)
+        registerCommands(
+            restrictionCommand,
+            TrashCommand()
+        )
 
         // features
         registerCoalFeature()
         registerDevNullFeature()
         registerFlooFeature()
+        registerHopperFeature()
 
         logger.info("Enabled aragok-survival")
     }
@@ -176,6 +182,12 @@ class AragokPaperSurvival : JavaPlugin() {
             FlooUseListeners(logger),
             WitchDropEssenceListener(unusedFlooPowderRecipeKey)
         )
+    }
+
+    fun registerHopperFeature() {
+        logger.info("Registering hopper filter listener...")
+
+        registerEvents(HopperFilterListener())
     }
 
 }

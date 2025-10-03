@@ -26,7 +26,7 @@ class AragokPaperBase : JavaPlugin() {
         // custom items
         registerEvents(PreventCraftingListener(logger))
 
-        val activityService = PlayerMovementActivity(this, 15 * 60 * 1000) // 15 minutes
+        val activityService = PlayerMovementActivity(this, 5 * 60 * 1000) // 5 minutes
         registerEvents(activityService)
         registerService<ActivityService>(activityService)
         playerMovementActivity = activityService
