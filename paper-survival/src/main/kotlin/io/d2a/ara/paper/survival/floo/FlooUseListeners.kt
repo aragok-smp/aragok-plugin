@@ -218,7 +218,7 @@ class FlooUseListeners(
     }
 
     fun playTeleportEffects(location: Location) {
-        location.world.strikeLightning(location)
+        location.world.strikeLightningEffect(location)
         location.world.spawnParticle(Particle.SOUL_FIRE_FLAME, location, 50, 0.5, 0.5, 0.5, 0.2)
     }
 
