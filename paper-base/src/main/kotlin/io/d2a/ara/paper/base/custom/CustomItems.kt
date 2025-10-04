@@ -1,6 +1,7 @@
 package io.d2a.ara.paper.base.custom
 
 import io.d2a.ara.paper.base.extension.italic
+import io.d2a.ara.paper.base.extension.setByte
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -16,13 +17,15 @@ class CustomItems {
          */
         const val NAMESPACE = "aragok"
 
+        val PDC_CUSTOM_ITEM = NamespacedKey(NAMESPACE, "custom_item")
+
         /**
          * Performant check if the given item stack is a custom item by checking its item model key.
          */
         fun isCustomItem(
             stack: ItemStack?,
             itemModel: NamespacedKey,
-            type: Material? = Material.STICK
+            type: Material = Material.STICK
         ): Boolean {
             if (stack == null) return false
             // first we check the type which is much faster than accessing item meta
@@ -47,6 +50,9 @@ class CustomItems {
             if (rarity != null) {
                 meta.setRarity(rarity)
             }
+
+            // for later lookup that this is a custom item
+            meta.persistentDataContainer.setByte(PDC_CUSTOM_ITEM, 1)
 
             this.itemMeta = meta
         }
