@@ -4,6 +4,7 @@ import io.d2a.ara.paper.survival.hopper.HopperFilterItem.Companion.isHopperFilte
 import org.bukkit.Material
 import org.bukkit.Particle
 import org.bukkit.block.Hopper
+import org.bukkit.block.ShulkerBox
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -11,10 +12,11 @@ import org.bukkit.event.inventory.InventoryMoveItemEvent
 import org.bukkit.event.inventory.InventoryPickupItemEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.BundleMeta
+import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.EnchantmentStorageMeta
 import org.bukkit.inventory.meta.ItemMeta
 
+// TODO: accept and deny filters have wrong wildcard logic
 class HopperFilterLifecycleListener : Listener {
 
     companion object {
@@ -30,7 +32,7 @@ class HopperFilterLifecycleListener : Listener {
 
     private data class Filter(
         val type: HopperFilterItem.HopperFilterType,
-        val bundle: BundleMeta
+        val shulker: ShulkerBox
     )
 
     @EventHandler
@@ -111,8 +113,9 @@ class HopperFilterLifecycleListener : Listener {
             .filter { (index, it) -> index != 0 && it != null && it.type != Material.AIR }
             .mapNotNull { (_, it) ->
                 val type = HopperFilterItem.getHopperFilterType(it) ?: return@mapNotNull null
-                val bundle = it?.itemMeta as? BundleMeta ?: return@mapNotNull null
-                Filter(type, bundle)
+                val blockStateMeta = it?.itemMeta as? BlockStateMeta ?: return@mapNotNull null
+                val shulkerBox = blockStateMeta.blockState as? ShulkerBox ?: return@mapNotNull null
+                Filter(type, shulkerBox)
             }
             .toList()
 
@@ -122,8 +125,8 @@ class HopperFilterLifecycleListener : Listener {
 
         var decision: Result? = null // ACCEPT or DENY, DELETE returns immediately
 
-        for ((type, bundle) in filters) {
-            val match = bundleMatchesFast(bundle, stack)
+        for ((type, shulkerBox) in filters) {
+            val match = shulkerBoxMatchesFast(shulkerBox, stack)
             if (!match) continue
 
             when (type) {
@@ -157,10 +160,10 @@ class HopperFilterLifecycleListener : Listener {
      * - If the pattern item has any enchants (regular or stored), candidate must have those (>= level).
      * - If the pattern item has CustomModelData, candidate must have the **same** CMD.
      * - If the pattern has neither enchants nor CMD, type-only match is enough.
-     * - Empty bundle == wildcard (*).
+     * - Empty shulker == wildcard (*).
      */
-    private fun bundleMatchesFast(bundle: BundleMeta, candidate: ItemStack): Boolean {
-        val items = bundle.items
+    private fun shulkerBoxMatchesFast(shulkerBox: ShulkerBox, candidate: ItemStack): Boolean {
+        val items = shulkerBox.inventory.contents
         if (items.isEmpty()) return true // wildcard match
 
         val candidateType = candidate.type
@@ -168,7 +171,7 @@ class HopperFilterLifecycleListener : Listener {
             candidate.itemMeta // TODO: make this more performant; if (candidate.hasItemMeta()) candidate.itemMeta else null
 
         for (pat in items) {
-            if (pat.type != candidateType) continue
+            if (pat?.type != candidateType) continue
             val patMeta = pat.itemMeta // TODO: make this more performant if (pat.hasItemMeta()) pat.itemMeta else null
 
             val hasPatEnchants =

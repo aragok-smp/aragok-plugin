@@ -16,8 +16,7 @@ import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toEssenceItem
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toUnusedPowderItem
 import io.d2a.ara.paper.survival.floo.FlooUseListeners
 import io.d2a.ara.paper.survival.floo.WitchDropEssenceListener
-import io.d2a.ara.paper.survival.hopper.HopperFilterItem
-import io.d2a.ara.paper.survival.hopper.HopperFilterLifecycleListener
+import io.d2a.ara.paper.survival.hopper.*
 import io.d2a.ara.paper.survival.restriction.DimensionRestriction
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
 import org.bukkit.Material
@@ -227,8 +226,10 @@ class AragokPaperSurvival : JavaPlugin() {
 
         // prevent using hopper filter items
         registerEvents(
-            HopperFilterItem(logger),
+            MakeHopperFilterUselessListener(logger),
+            SmartHopperPlaceBreakListener(logger),
             HopperFilterLifecycleListener(),
+            HopperFilterEditor(),
         )
     }
 

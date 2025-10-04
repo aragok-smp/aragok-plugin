@@ -109,13 +109,7 @@ class FlooUseListeners(
         val powderItem = FlooItem.toPowderItem().apply {
             amount = item.amount
             itemMeta = itemMeta.apply {
-                lore(
-                    listOf(
-                        Component.text("Destination: ", NamedTextColor.GRAY)
-                            .append(Component.text(flooNetworkName, NamedTextColor.YELLOW))
-                            .italic(false)
-                    )
-                )
+                customName(Component.text(flooNetworkName).italic(false))
                 persistentDataContainer.apply {
                     setString(FLOO_POWDER_DESTINATION_NAME, flooNetworkName)
                     setInt(FLOO_POWDER_DESTINATION_X, clicked.x)
