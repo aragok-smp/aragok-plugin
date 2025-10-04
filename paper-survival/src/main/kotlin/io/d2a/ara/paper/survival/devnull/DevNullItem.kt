@@ -17,10 +17,10 @@ class DevNullItem {
 
         fun isDevNull(item: ItemStack?): Boolean {
             // these checks are only to improve performance
-            if (item?.type != Material.BLACK_BUNDLE || !item.hasItemMeta()) {
+            if (item?.type != Material.BLACK_BUNDLE) {
                 return false
             }
-            return item.itemMeta?.persistentDataContainer?.has(PDC_DEV_NULL_ENABLEMENT) == true
+            return item.persistentDataContainer.has(PDC_DEV_NULL_ENABLEMENT)
         }
 
         fun toItem(): ItemStack = ItemStack.of(Material.BLACK_BUNDLE).apply {

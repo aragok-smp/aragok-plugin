@@ -5,7 +5,9 @@ import io.d2a.ara.paper.base.commands.CommandBuilder
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
+import org.bukkit.Keyed
 import org.bukkit.event.Listener
+import org.bukkit.inventory.Recipe
 import org.bukkit.plugin.PluginManager
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
@@ -46,6 +48,15 @@ fun JavaPlugin.registerEvents(vararg listeners: Listener) =
 fun <T : Listener> JavaPlugin.withListenerRegistration(listener: T): T = listener.also {
     server.pluginManager.registerEvents(it, this)
 }
+
+/**
+ * Registers multiple crafting recipes at once.
+ */
+fun <T> JavaPlugin.registerRecipe(vararg recipe: T) where T : Recipe, T : Keyed =
+    recipe.forEach {
+        logger.info("Registering recipe: ${it.key}")
+        server.addRecipe(it)
+    }
 
 /**
  * Registers multiple commands at once.

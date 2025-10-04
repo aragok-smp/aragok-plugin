@@ -16,7 +16,8 @@ import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toEssenceItem
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toUnusedPowderItem
 import io.d2a.ara.paper.survival.floo.FlooUseListeners
 import io.d2a.ara.paper.survival.floo.WitchDropEssenceListener
-import io.d2a.ara.paper.survival.hopper.HopperFilterListener
+import io.d2a.ara.paper.survival.hopper.HopperFilterItem
+import io.d2a.ara.paper.survival.hopper.HopperFilterLifecycleListener
 import io.d2a.ara.paper.survival.restriction.DimensionRestriction
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
 import org.bukkit.Material
@@ -36,6 +37,12 @@ class AragokPaperSurvival : JavaPlugin() {
     val infusedCoalRecipeKey = NamespacedKey(this, "infused_coal")
     val superchargedCoalRecipeKey = NamespacedKey(this, "supercharged_coal")
     val unusedFlooPowderRecipeKey = NamespacedKey(this, "unused_floo_powder")
+
+    // filter recipes
+    val smartHopperRecipeKey = NamespacedKey(this, "smart_hopper")
+    val acceptHopperFilterRecipeKey = NamespacedKey(this, "hopper_filter_accept")
+    val denyHopperFilterRecipeKey = NamespacedKey(this, "hopper_filter_deny")
+    val deleteHopperFilterRecipeKey = NamespacedKey(this, "hopper_filter_delete")
 
 
     override fun onEnable() {
@@ -86,46 +93,36 @@ class AragokPaperSurvival : JavaPlugin() {
         val infusedCoalItem = INFUSED.toItem()
         val superchargedCoalItem = SUPERCHARGED.toItem()
 
-        server.apply {
-            addRecipe(
-                ShapelessRecipe(
-                    enrichedCoalRecipeKey,
-                    enrichedCoalItem
-                )
-                    .addIngredient(1, Material.COAL)
-                    .addIngredient(1, Material.IRON_NUGGET)
-                    .addIngredient(1, Material.IRON_NUGGET)
+        registerRecipe(
+            ShapelessRecipe(
+                enrichedCoalRecipeKey,
+                enrichedCoalItem
             )
-            addRecipe(
-                ShapelessRecipe(
-                    infusedCoalRecipeKey,
-                    infusedCoalItem
-                )
-                    .addIngredient(RecipeChoice.ExactChoice(enrichedCoalItem))
-                    .addIngredient(1, Material.BLAZE_POWDER)
-                    .addIngredient(1, Material.REDSTONE)
+                .addIngredient(1, Material.COAL)
+                .addIngredient(1, Material.IRON_NUGGET)
+                .addIngredient(1, Material.IRON_NUGGET),
+            ShapelessRecipe(
+                infusedCoalRecipeKey,
+                infusedCoalItem
             )
-            addRecipe(
-                ShapelessRecipe(
-                    superchargedCoalRecipeKey,
-                    superchargedCoalItem
-                )
-                    .addIngredient(RecipeChoice.ExactChoice(infusedCoalItem))
-                    .addIngredient(1, Material.END_CRYSTAL)
-                    .addIngredient(1, Material.AMETHYST_SHARD)
+                .addIngredient(RecipeChoice.ExactChoice(enrichedCoalItem))
+                .addIngredient(1, Material.BLAZE_POWDER)
+                .addIngredient(1, Material.REDSTONE),
+            ShapelessRecipe(
+                superchargedCoalRecipeKey,
+                superchargedCoalItem
             )
-
-            // charcoal variant -> enriched coal
-            addRecipe(
-                ShapelessRecipe(
-                    enrichedCharcoalRecipeKey,
-                    enrichedCoalItem
-                )
-                    .addIngredient(1, Material.CHARCOAL)
-                    .addIngredient(1, Material.IRON_NUGGET)
-                    .addIngredient(1, Material.IRON_NUGGET)
+                .addIngredient(RecipeChoice.ExactChoice(infusedCoalItem))
+                .addIngredient(1, Material.END_CRYSTAL)
+                .addIngredient(1, Material.AMETHYST_SHARD),
+            ShapelessRecipe(
+                enrichedCharcoalRecipeKey,
+                enrichedCoalItem
             )
-        }
+                .addIngredient(1, Material.CHARCOAL)
+                .addIngredient(1, Material.IRON_NUGGET)
+                .addIngredient(1, Material.IRON_NUGGET)
+        )
 
         registerEvents(
             FurnaceSmeltCoalListener(),
@@ -142,7 +139,7 @@ class AragokPaperSurvival : JavaPlugin() {
         logger.info("Registering dev/null item and listener...")
 
         val devNullItem = DevNullItem.toItem()
-        server.addRecipe(
+        registerRecipe(
             ShapedRecipe(
                 devNullRecipeKey,
                 devNullItem
@@ -166,17 +163,15 @@ class AragokPaperSurvival : JavaPlugin() {
         val essenceItem = toEssenceItem()
         val unusedPowderItem = toUnusedPowderItem()
 
-        server.apply {
-            addRecipe(
-                ShapedRecipe(
-                    unusedFlooPowderRecipeKey,
-                    unusedPowderItem
-                )
-                    .shape(" G ", "GPG", " G ")
-                    .setIngredient('G', RecipeChoice.ExactChoice(essenceItem))
-                    .setIngredient('P', Material.ENDER_PEARL)
+        registerRecipe(
+            ShapedRecipe(
+                unusedFlooPowderRecipeKey,
+                unusedPowderItem
             )
-        }
+                .shape(" G ", "GPG", " G ")
+                .setIngredient('G', RecipeChoice.ExactChoice(essenceItem))
+                .setIngredient('P', Material.ENDER_PEARL)
+        )
 
         registerEvents(
             FlooUseListeners(logger),
@@ -187,7 +182,54 @@ class AragokPaperSurvival : JavaPlugin() {
     fun registerHopperFeature() {
         logger.info("Registering hopper filter listener...")
 
-        registerEvents(HopperFilterListener())
+        registerRecipe(
+            ShapelessRecipe(
+                smartHopperRecipeKey,
+                HopperFilterItem.toSmartHopperItem(),
+            )
+                .addIngredient(1, Material.HOPPER)
+                .addIngredient(1, Material.COMPARATOR)
+                .addIngredient(1, Material.QUARTZ),
+
+            ShapedRecipe(
+                acceptHopperFilterRecipeKey,
+                HopperFilterItem.toItem(HopperFilterItem.HopperFilterType.ALLOW),
+            ).shape("IGI", "RHC", "IQI")
+                .setIngredient('I', Material.IRON_INGOT)
+                .setIngredient('G', Material.GREEN_DYE)
+                .setIngredient('R', Material.REDSTONE)
+                .setIngredient('H', Material.HOPPER)
+                .setIngredient('C', Material.COMPARATOR)
+                .setIngredient('Q', Material.QUARTZ),
+
+            ShapedRecipe(
+                denyHopperFilterRecipeKey,
+                HopperFilterItem.toItem(HopperFilterItem.HopperFilterType.DENY),
+            ).shape("IGI", "RHO", "IQI")
+                .setIngredient('I', Material.IRON_INGOT)
+                .setIngredient('G', Material.RED_DYE)
+                .setIngredient('R', Material.REDSTONE)
+                .setIngredient('H', Material.HOPPER)
+                .setIngredient('O', Material.OBSERVER)
+                .setIngredient('Q', Material.QUARTZ),
+
+            ShapedRecipe(
+                deleteHopperFilterRecipeKey,
+                HopperFilterItem.toItem(HopperFilterItem.HopperFilterType.DELETE),
+            ).shape("IGI", "RHC", "ITI")
+                .setIngredient('I', Material.IRON_INGOT)
+                .setIngredient('G', Material.PURPLE_DYE)
+                .setIngredient('R', Material.REDSTONE)
+                .setIngredient('H', Material.HOPPER)
+                .setIngredient('C', Material.COMPARATOR)
+                .setIngredient('T', Material.TNT),
+        )
+
+        // prevent using hopper filter items
+        registerEvents(
+            HopperFilterItem(logger),
+            HopperFilterLifecycleListener(),
+        )
     }
 
 }

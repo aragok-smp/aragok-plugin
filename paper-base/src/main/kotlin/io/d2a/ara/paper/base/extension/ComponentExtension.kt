@@ -24,6 +24,8 @@ fun String.toComponent(): Component =
     else
         toComponent(TextFormat.LEGACY)
 
+fun String.text(): Component = Component.text(this)
+
 fun Component.namedColor(): NamedTextColor? =
     this.color()?.let { NamedTextColor.nearestTo(it) }
 
