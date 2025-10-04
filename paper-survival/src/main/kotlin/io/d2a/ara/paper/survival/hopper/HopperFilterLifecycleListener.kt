@@ -16,7 +16,6 @@ import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.EnchantmentStorageMeta
 import org.bukkit.inventory.meta.ItemMeta
 
-// TODO: accept and deny filters have wrong wildcard logic
 class HopperFilterLifecycleListener : Listener {
 
     companion object {
@@ -123,8 +122,7 @@ class HopperFilterLifecycleListener : Listener {
 
         val hasAnyDeny = filters.any { it.type == HopperFilterItem.HopperFilterType.DENY }
 
-        var decision: Result? = null // ACCEPT or DENY, DELETE returns immediately
-
+        var decision: Result? = null
         for ((type, shulkerBox) in filters) {
             val match = shulkerBoxMatchesFast(shulkerBox, stack)
             if (!match) continue
@@ -164,7 +162,11 @@ class HopperFilterLifecycleListener : Listener {
      */
     private fun shulkerBoxMatchesFast(shulkerBox: ShulkerBox, candidate: ItemStack): Boolean {
         val items = shulkerBox.inventory.contents
-        if (items.isEmpty()) return true // wildcard match
+
+        // empty shulker = wildcard
+        if (items.all { it == null || it.type == Material.AIR }) {
+            return true
+        }
 
         val candidateType = candidate.type
         val candidateMeta =

@@ -11,7 +11,6 @@ import org.bukkit.inventory.ItemStack
 
 // TODO(future): when syncing inventories to other servers, we should make sure the player cannot
 //  retrieve the hopper filter item on the other server
-// TODO: prevent item duplication
 class HopperFilterItem {
 
     enum class HopperFilterType {
