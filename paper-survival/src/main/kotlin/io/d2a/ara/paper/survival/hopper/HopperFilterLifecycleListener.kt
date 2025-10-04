@@ -137,8 +137,8 @@ class HopperFilterLifecycleListener : Listener {
                 }
 
                 HopperFilterItem.HopperFilterType.DELETE -> {
-                    // if no choice yet, treat as if it's currently allowed
-                    if (decision == null || decision == Result.ACCEPT) {
+                    // require accept decision
+                    if (decision == Result.ACCEPT) {
                         return Result.DELETE
                     }
                 }
