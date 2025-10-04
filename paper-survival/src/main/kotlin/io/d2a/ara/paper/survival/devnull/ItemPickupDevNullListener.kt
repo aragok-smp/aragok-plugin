@@ -15,7 +15,7 @@ class ItemPickupDevNullListener : Listener {
 
         // search for dev null item in HOTBAR
         for (item in player.inventory.take(9)) {
-            if (!DevNullItem.Companion.isDevNull(item)) {
+            if (!DevNullItem.isDevNull(item)) {
                 continue
             }
             val bundle = item.itemMeta as? BundleMeta ?: continue

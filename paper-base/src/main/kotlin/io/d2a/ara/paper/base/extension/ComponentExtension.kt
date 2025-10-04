@@ -2,6 +2,7 @@ package io.d2a.ara.paper.base.extension
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
@@ -23,6 +24,14 @@ fun String.toComponent(): Component =
         toComponent(TextFormat.MINI_MESSAGE)
     else
         toComponent(TextFormat.LEGACY)
+
+fun String.text(color: TextColor? = null): Component {
+    val comp = Component.text(this)
+    if (color != null) {
+        return comp.color(color)
+    }
+    return comp
+}
 
 fun Component.namedColor(): NamedTextColor? =
     this.color()?.let { NamedTextColor.nearestTo(it) }
