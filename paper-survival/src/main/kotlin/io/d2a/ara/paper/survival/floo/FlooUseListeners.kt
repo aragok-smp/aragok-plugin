@@ -18,6 +18,8 @@ import org.bukkit.event.entity.EntityDamageByBlockEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 import java.util.*
 import java.util.logging.Logger
 
@@ -179,6 +181,8 @@ class FlooUseListeners(
                 .append(Component.text("...", NamedTextColor.GRAY))
         )
 
+        val oldPlayerLocation = player.location.clone()
+
         player.teleportAsync(destinationLocation)
             .thenAccept { result ->
                 if (result) {
@@ -189,7 +193,10 @@ class FlooUseListeners(
                             .append(Component.text(destinationName, NamedTextColor.YELLOW))
                     )
 
-                    playTeleportEffects(player.location)
+                    player.damage(1.0)
+                    player.addPotionEffect(PotionEffect(PotionEffectType.NAUSEA, 2, 1, false, false, false))
+
+                    playTeleportEffects(oldPlayerLocation)
                     playTeleportEffects(destinationLocation)
                 } else {
                     // allow the player to pick the item back up
