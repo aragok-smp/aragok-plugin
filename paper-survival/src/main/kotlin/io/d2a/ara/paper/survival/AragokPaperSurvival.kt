@@ -12,8 +12,10 @@ import io.d2a.ara.paper.survival.commands.TrashCommand
 import io.d2a.ara.paper.survival.devnull.CraftBagListener
 import io.d2a.ara.paper.survival.devnull.DevNullItem
 import io.d2a.ara.paper.survival.devnull.ItemPickupDevNullListener
-import io.d2a.ara.paper.survival.enderchest.EnderChestChannelStorage
+import io.d2a.ara.paper.survival.enderchest.EnderChestStorage
 import io.d2a.ara.paper.survival.enderchest.EnderChestPlaceBreakListener
+import io.d2a.ara.paper.survival.enderchest.EnderChestUseListener
+import io.d2a.ara.paper.survival.enderchest.EnderStorageKeys
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toEssenceItem
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toUnusedPowderItem
 import io.d2a.ara.paper.survival.floo.FlooUseListeners
@@ -31,7 +33,7 @@ import org.bukkit.plugin.java.JavaPlugin
 class AragokPaperSurvival : JavaPlugin() {
 
     private var borderTask: BorderTask? = null
-    private var enderStorage: EnderChestChannelStorage? = null
+    private var enderStorage: EnderChestStorage? = null
 
     val devNullRecipeKey = NamespacedKey(this, "dev_null")
     val enrichedCoalRecipeKey = NamespacedKey(this, "enriched_coal")
@@ -48,6 +50,8 @@ class AragokPaperSurvival : JavaPlugin() {
 
 
     override fun onEnable() {
+        EnderStorageKeys.init(this)
+
         // start activity service
         val activityService = getService<ActivityService>()
             ?: return disableWithError("ActivityService not found")
@@ -245,12 +249,15 @@ class AragokPaperSurvival : JavaPlugin() {
     fun registerEndStorageFeature() {
         logger.info("Registering ender storage feature...")
 
-        val storage = EnderChestChannelStorage(this).apply {
+        val storage = EnderChestStorage(this).apply {
             startAutosave(intervalSeconds = 300)
         }
         enderStorage = storage
 
-        registerEvents(EnderChestPlaceBreakListener(logger, storage))
+        registerEvents(
+            EnderChestPlaceBreakListener(logger),
+            EnderChestUseListener(logger, storage)
+        )
     }
 
 }

@@ -1,98 +1,69 @@
 package io.d2a.ara.paper.survival.enderchest
 
-import io.d2a.ara.paper.base.custom.CustomItems.Companion.NAMESPACE
-import io.d2a.ara.paper.base.extension.*
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
-import org.bukkit.*
+import io.d2a.ara.paper.base.extension.getUniqueId
+import io.d2a.ara.paper.base.extension.persist
+import io.d2a.ara.paper.base.extension.setInt
+import io.d2a.ara.paper.base.extension.setString
+import org.bukkit.DyeColor
+import org.bukkit.Material
+import org.bukkit.block.BlockFace
 import org.bukkit.block.EnderChest
+import org.bukkit.block.data.Directional
 import org.bukkit.entity.Display
 import org.bukkit.entity.Interaction
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
-import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
-import org.bukkit.event.inventory.InventoryCloseEvent
-import org.bukkit.event.player.PlayerInteractAtEntityEvent
-import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.util.Transformation
+import org.bukkit.util.Vector
 import org.joml.AxisAngle4f
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
 import java.util.logging.Logger
 
-// TODO: as soon as the first ender chest was opened
-//   The user should not be able to re-color it to prevent abuse (infinite inventory space)
 class EnderChestPlaceBreakListener(
     val logger: Logger,
-    val storage: EnderChestChannelStorage
 ) : Listener {
 
-    companion object {
-        val PLAIN = PlainTextComponentSerializer.plainText()
+    // pre-built glass ItemStacks by dye color
+    val coloredGlassByDye = EnumMap<DyeColor, ItemStack>(DyeColor::class.java).apply {
+        for (dyeColor in DyeColor.entries) {
+            val material = Material.valueOf("${dyeColor.name}_STAINED_GLASS")
+            put(dyeColor, ItemStack.of(material))
+        }
     }
 
-    private object Stripes {
-        //        val PDC_INTERACTION_TARGET_ENDER_CHEST = NamespacedKey(NAMESPACE, "ender_interaction_target_ender_chest")
-        val PDC_INTERACTION_TARGET_PATTERN = NamespacedKey(NAMESPACE, "ender_interaction_target_pattern")
-
-        // make sure we cannot re-color when locked
-        val PDC_LOCKED = NamespacedKey(NAMESPACE, "ender_locked")
-
-        val PDC_LEFT_KEY = NamespacedKey(NAMESPACE, "ender_left_key")
-        val PDC_MIDDLE_KEY = NamespacedKey(NAMESPACE, "ender_middle_key")
-        val PDC_RIGHT_KEY = NamespacedKey(NAMESPACE, "ender_right_key")
-
-        val PDC_LEFT_DISPLAY_UUID = NamespacedKey(NAMESPACE, "ender_left_display_uuid")
-        val PDC_MIDDLE_DISPLAY_UUID = NamespacedKey(NAMESPACE, "ender_middle_display_uuid")
-        val PDC_RIGHT_DISPLAY_UUID = NamespacedKey(NAMESPACE, "ender_right_display_uuid")
-
-        val PDC_LEFT_INTERACTION_UUID = NamespacedKey(NAMESPACE, "ender_left_interaction_uuid")
-        val PDC_MIDDLE_INTERACTION_UUID = NamespacedKey(NAMESPACE, "ender_middle_interaction_uuid")
-        val PDC_RIGHT_INTERACTION_UUID = NamespacedKey(NAMESPACE, "ender_right_interaction_uuid")
-
-        // TODO: store the pattern in the enderchest!
-
-        // pre-built glass ItemStacks by dye color
-        val coloredGlassByDye = EnumMap<DyeColor, ItemStack>(DyeColor::class.java).apply {
-            for (dyeColor in DyeColor.entries) {
-                val material = Material.valueOf("${dyeColor.name}_STAINED_GLASS")
-                put(dyeColor, ItemStack.of(material))
-            }
-        }
-
-        // pre-built mapping of materials to dye colors
-        val materialToDye = EnumMap<Material, DyeColor>(Material::class.java).apply {
-            for (material in Material.entries) {
-                if (material.name.endsWith("_DYE")) {
-                    val dye = DyeColor.entries.find { it.name == material.name.removeSuffix("_DYE") }
-                    if (dye != null) {
-                        put(material, dye)
-                    }
-                }
-            }
-        }
-
-        // X offsets for left, center and right stripes on the chest lid
-        val stripeXOffsets = doubleArrayOf(-0.20, 0.0, 0.20)
-
-        // transformation to make a thin rectangular plate
-        val sharedTransform = Transformation(
-            Vector3f(0f, 0f, 0f),
-            Quaternionf(AxisAngle4f(0f, 0f, 1f, 0f)),
-            Vector3f(0.10f, 0.05f, 0.30f),
-            Quaternionf()
-        )
+    private fun leftVector(face: BlockFace): Vector = when (face) {
+        BlockFace.NORTH -> Vector(-1.0, 0.0, 0.0)
+        BlockFace.SOUTH -> Vector(1.0, 0.0, 0.0)
+        BlockFace.WEST -> Vector(0.0, 0.0, 1.0)
+        BlockFace.EAST -> Vector(0.0, 0.0, -1.0)
+        else -> Vector(-1.0, 0.0, 0.0)
     }
 
-    fun spawnEnderChestWithStripes(enderChest: EnderChest, pattern: EnderChestPattern) {
+    private fun isEastWest(face: BlockFace): Boolean =
+        face == BlockFace.EAST || face == BlockFace.WEST
+
+    fun spawnEnderChestWithStripes(enderChest: EnderChest) {
         val world = enderChest.world
         val lidCenter = enderChest.location.clone().add(0.5, 0.9, 0.5)
+
+        val face = (enderChest.blockData as? Directional)?.facing ?: return
+        val left = leftVector(face)
+
+        val offsets = doubleArrayOf(-0.20, 0.0, 0.20)
+        val (scaleX, scaleZ) = if (isEastWest(face)) 0.3f to 0.1f else 0.1f to 0.3f
+        val transform = Transformation(
+            Vector3f(0f, 0f, 0f),
+            Quaternionf(AxisAngle4f(0f, 0f, 1f, 0f)),
+            Vector3f(scaleX, 0.05f, scaleZ),
+            Quaternionf()
+        )
 
         var leftDisplayUuid: UUID? = null
         var middleDisplayUuid: UUID? = null
@@ -102,16 +73,11 @@ class EnderChestPlaceBreakListener(
         var middleInteractionUuid: UUID? = null
         var rightInteractionUuid: UUID? = null
 
-        Stripes.stripeXOffsets.forEachIndexed { index, xOffset ->
-            val stripeLocation = lidCenter.clone().add(xOffset, 0.0, 0.0)
+        offsets.forEachIndexed { index, offset ->
+            val stripeLocation = lidCenter.clone().add(left.clone().multiply(offset))
 
-            val dyeColor = when (index) {
-                0 -> pattern.left
-                1 -> pattern.middle
-                2 -> pattern.right
-                else -> throw IllegalStateException("Index out of bounds: $index")
-            }
-            val glassItem = Stripes.coloredGlassByDye[dyeColor] ?: return@forEachIndexed
+            val dyeColor = DyeColor.WHITE
+            val glassItem = coloredGlassByDye[dyeColor] ?: return@forEachIndexed
 
             val itemDisplay = world.spawn(stripeLocation, ItemDisplay::class.java) { display ->
                 display.isPersistent = true
@@ -122,7 +88,7 @@ class EnderChestPlaceBreakListener(
                 display.setGravity(false)
                 display.isInvulnerable = true
                 display.viewRange = 32f
-                display.transformation = Stripes.sharedTransform
+                display.transformation = transform
             }
             when (index) {
                 0 -> leftDisplayUuid = itemDisplay.uniqueId
@@ -140,9 +106,7 @@ class EnderChestPlaceBreakListener(
                 hitbox.isResponsive = false
 
                 hitbox.persistentDataContainer.apply {
-                    // TODO: check if this is required
-                    // setString(Stripes.PDC_INTERACTION_TARGET_ENDER_CHEST, blockLocationToString(enderChest.location))
-                    setInt(Stripes.PDC_INTERACTION_TARGET_PATTERN, index)
+                    setInt(EnderStorageKeys.hitboxStripeIndex, index)
                 }
             }
             when (index) {
@@ -159,54 +123,33 @@ class EnderChestPlaceBreakListener(
 
         // store the UUIDs of the displays and interactions in the ender chest's persistent data container
         enderChest.persist {
-            setString(Stripes.PDC_LEFT_DISPLAY_UUID, leftDisplayUuid.toString())
-            setString(Stripes.PDC_MIDDLE_DISPLAY_UUID, middleDisplayUuid.toString())
-            setString(Stripes.PDC_RIGHT_DISPLAY_UUID, rightDisplayUuid.toString())
+            setString(EnderStorageKeys.left, DyeColor.WHITE.name)
+            setString(EnderStorageKeys.middle, DyeColor.WHITE.name)
+            setString(EnderStorageKeys.right, DyeColor.WHITE.name)
 
-            setString(Stripes.PDC_LEFT_INTERACTION_UUID, leftInteractionUuid.toString())
-            setString(Stripes.PDC_MIDDLE_INTERACTION_UUID, middleInteractionUuid.toString())
-            setString(Stripes.PDC_RIGHT_INTERACTION_UUID, rightInteractionUuid.toString())
+            setString(EnderStorageKeys.leftDisplay, leftDisplayUuid.toString())
+            setString(EnderStorageKeys.middleDisplay, middleDisplayUuid.toString())
+            setString(EnderStorageKeys.rightDisplay, rightDisplayUuid.toString())
 
-            // store the pattern
-            setString(Stripes.PDC_LEFT_KEY, pattern.left.name)
-            setString(Stripes.PDC_MIDDLE_KEY, pattern.middle.name)
-            setString(Stripes.PDC_RIGHT_KEY, pattern.right.name)
+            setString(EnderStorageKeys.leftHitbox, leftInteractionUuid.toString())
+            setString(EnderStorageKeys.middleHitbox, middleInteractionUuid.toString())
+            setString(EnderStorageKeys.rightHitbox, rightInteractionUuid.toString())
         }
     }
 
-    fun updateStripeColor(enderChest: EnderChest, index: Int, stack: ItemStack, key: String) {
-        val world = enderChest.world
-
-        val displayUuid = when (index) {
-            0 -> enderChest.persistentDataContainer.getString(Stripes.PDC_LEFT_DISPLAY_UUID)
-            1 -> enderChest.persistentDataContainer.getString(Stripes.PDC_MIDDLE_DISPLAY_UUID)
-            2 -> enderChest.persistentDataContainer.getString(Stripes.PDC_RIGHT_DISPLAY_UUID)
-            else -> null
-        } ?: return
-
-        val display = world.getEntity(UUID.fromString(displayUuid)) as? ItemDisplay ?: return
-        display.setItemStack(stack)
-
-        // also update the stored pattern in the ender chest
-        when (index) {
-            0 -> enderChest.persist { setString(Stripes.PDC_LEFT_KEY, key) }
-            1 -> enderChest.persist { setString(Stripes.PDC_MIDDLE_KEY, key) }
-            2 -> enderChest.persist { setString(Stripes.PDC_RIGHT_KEY, key) }
-        }
-    }
 
     fun removeAllEntities(enderChest: EnderChest) {
         val world = enderChest.world
         enderChest.persistentDataContainer.apply {
             // remove displays
-            getUniqueId(Stripes.PDC_LEFT_DISPLAY_UUID)?.let { world.getEntity(it)?.remove() }
-            getUniqueId(Stripes.PDC_MIDDLE_DISPLAY_UUID)?.let { world.getEntity(it)?.remove() }
-            getUniqueId(Stripes.PDC_RIGHT_DISPLAY_UUID)?.let { world.getEntity(it)?.remove() }
+            getUniqueId(EnderStorageKeys.leftDisplay)?.let { world.getEntity(it)?.remove() }
+            getUniqueId(EnderStorageKeys.middleDisplay)?.let { world.getEntity(it)?.remove() }
+            getUniqueId(EnderStorageKeys.rightDisplay)?.let { world.getEntity(it)?.remove() }
 
             // remove interactions
-            getUniqueId(Stripes.PDC_LEFT_INTERACTION_UUID)?.let { world.getEntity(it)?.remove() }
-            getUniqueId(Stripes.PDC_MIDDLE_INTERACTION_UUID)?.let { world.getEntity(it)?.remove() }
-            getUniqueId(Stripes.PDC_RIGHT_INTERACTION_UUID)?.let { world.getEntity(it)?.remove() }
+            getUniqueId(EnderStorageKeys.leftHitbox)?.let { world.getEntity(it)?.remove() }
+            getUniqueId(EnderStorageKeys.middleHitbox)?.let { world.getEntity(it)?.remove() }
+            getUniqueId(EnderStorageKeys.rightHitbox)?.let { world.getEntity(it)?.remove() }
         }
     }
 
@@ -221,8 +164,12 @@ class EnderChestPlaceBreakListener(
 
         val enderChest = event.block.state as? EnderChest ?: return
 
-        spawnEnderChestWithStripes(enderChest, EnderChestPattern.default())
-//        enderChest.world.playSound(enderChest.location, Sound.)
+        spawnEnderChestWithStripes(enderChest)
+
+        // TODO: play particles
+        // TODO: play sound
+
+        logger.info("Player ${event.player.name} placed an ender chest at ${enderChest.location}")
     }
 
     // remove interactions when the ender chest is broken
@@ -236,131 +183,12 @@ class EnderChestPlaceBreakListener(
 
         val enderChest = event.block.state as? EnderChest ?: return
         removeAllEntities(enderChest)
-    }
 
-    // re-color the pattern
-    @EventHandler(
-        priority = EventPriority.HIGHEST,
-        ignoreCancelled = true
-    )
-    fun onStripeClick(event: PlayerInteractAtEntityEvent) {
-        val interaction = event.rightClicked as? Interaction ?: return
-        println("player ${event.player.name} clicked interaction entity ${interaction.uniqueId}")
+        // prevent abuse -> the chest gets destroyed
+        event.isDropItems = false
+        event.expToDrop = 15
 
-        val chestBlock = interaction.location.block
-        if (chestBlock.type != Material.ENDER_CHEST) return
-        val enderChest = chestBlock.state as? EnderChest ?: return
-        println("and it's on top of an ender chest at ${enderChest.location}")
-
-        val player = event.player
-
-        val pdc = interaction.persistentDataContainer
-        val patternPartIndex = pdc.getInt(Stripes.PDC_INTERACTION_TARGET_PATTERN) ?: return
-        println("player ${player.name} clicked interaction for index $patternPartIndex")
-
-        event.isCancelled = true // prevent interaction from doing anything else
-
-        if (!player.isSneaking) return
-
-        // prevent re-coloring when locked
-        // this should prevent abuse => infinite inventory space when re-coloring
-        if (enderChest.persistentDataContainer.isTrue(Stripes.PDC_LOCKED)) {
-            player.failActionBar(
-                "This Ender Storage is locked.",
-                sound = Sound.BLOCK_SNIFFER_EGG_PLOP.toAdventure()
-                    .volume(1.0f)
-                    .pitch(2.0f)
-                    .build()
-            )
-            return
-        }
-
-        val item = player.inventory.itemInMainHand
-        val dyeColor = Stripes.materialToDye[item.type] ?: return
-        println("player ${player.name} is holding dye color ${dyeColor.name}")
-
-        val glassItem = Stripes.coloredGlassByDye[dyeColor] ?: return
-        println("which corresponds to glass item ${glassItem.type.name}")
-
-        updateStripeColor(enderChest, patternPartIndex, glassItem, dyeColor.name)
-
-        enderChest.world.playSound(
-            enderChest.location,
-            Sound.AMBIENT_UNDERWATER_ENTER,
-            1.0f, 2.0f
-        )
-
-        // consume the item
-        if (item.amount > 1) {
-            item.amount -= 1
-        } else {
-            player.inventory.setItemInMainHand(null)
-        }
-
-        logger.info("player ${player.name} re-colored ender chest at ${enderChest.location} stripe index $patternPartIndex to color ${dyeColor.name}")
-    }
-
-    fun patternKeyOf(vararg keys: String): String = keys.joinToString("-")
-
-    @EventHandler(
-        ignoreCancelled = true
-    )
-    fun onChestOpen(event: PlayerInteractEvent) {
-        if (event.hand != EquipmentSlot.HAND) return
-        if (event.action != Action.RIGHT_CLICK_BLOCK) return
-
-        val block = event.clickedBlock ?: return
-        if (block.type != Material.ENDER_CHEST) return
-
-        val enderChest = block.state as? EnderChest ?: return
-        val patternKeyLeft = enderChest.persistentDataContainer.getString(Stripes.PDC_LEFT_KEY) ?: return
-        val patternKeyMiddle = enderChest.persistentDataContainer.getString(Stripes.PDC_MIDDLE_KEY) ?: return
-        val patternKeyRight = enderChest.persistentDataContainer.getString(Stripes.PDC_RIGHT_KEY) ?: return
-        val key = patternKeyOf(patternKeyLeft, patternKeyMiddle, patternKeyRight)
-
-        event.isCancelled = true
-
-        if (event.player.isSneaking) return
-
-        event.player.successActionBar("...")
-        val sharedInventory = storage.getOrCreateInventory(key)
-
-        event.player.openInventory(sharedInventory)
-
-        enderChest.persistentDataContainer.apply {
-            if (!isTrue(Stripes.PDC_LOCKED)) {
-                setTrue(Stripes.PDC_LOCKED)
-                enderChest.update(true, false)
-
-                enderChest.world.playSound(
-                    enderChest.location,
-                    Sound.BLOCK_CHEST_LOCKED,
-                    1.0f, 1.0f
-                )
-                enderChest.world.spawnParticle(Particle.END_ROD, enderChest.location, 20, 0.5, 0.5, 0.5, 0.0)
-
-                event.player.successActionBar("This Ender Chest is now locked.")
-                logger.info("Player ${event.player.name} locked ender chest at ${enderChest.location} with pattern $key")
-            } else {
-                enderChest.world.playSound(
-                    enderChest.location,
-                    Sound.BLOCK_ENDER_CHEST_OPEN,
-                    1.0f, 0.9f
-                )
-            }
-        }
-    }
-
-    @EventHandler
-    fun onEnderChestClose(event: InventoryCloseEvent) {
-        val title = PLAIN.serialize(event.view.title())
-        if (!title.startsWith(EnderChestChannelStorage.INVENTORY_PREFIX)) return
-
-        val key = title.removePrefix(EnderChestChannelStorage.INVENTORY_PREFIX).trim()
-        if (key.isEmpty()) return
-
-        storage.markDirty(key)
-        logger.info("Marked ender chest channel '$key' as dirty for saving.")
+        logger.info("Player ${event.player.name} broke an ender chest at ${enderChest.location}")
     }
 
 }
