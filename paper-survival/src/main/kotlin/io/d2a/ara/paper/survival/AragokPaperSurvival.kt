@@ -45,7 +45,7 @@ class AragokPaperSurvival : JavaPlugin() {
     val denyHopperFilterRecipeKey = NamespacedKey(this, "hopper_filter_deny")
     val deleteHopperFilterRecipeKey = NamespacedKey(this, "hopper_filter_delete")
 
-    // end chest
+    // ender storage
     val enderStorageRecipeKey = NamespacedKey(this, "ender_storage")
 
 

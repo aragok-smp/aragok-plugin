@@ -121,8 +121,6 @@ class EnderStorageUseListener(
         } else {
             player.inventory.setItemInMainHand(null)
         }
-
-        logger.info("player ${player.name} re-colored ender chest at ${enderChest.location} stripe index $patternPartIndex to color ${dyeColor.name}")
     }
 
     fun patternKeyOf(vararg keys: String): String = keys.joinToString("-")
@@ -152,7 +150,7 @@ class EnderStorageUseListener(
         enderChest.world.playSound(enderChest.location, Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 0.9f)
 
         enderChest.persistentDataContainer.apply {
-            // since the player tried to open the ender chest it is considered "complete",
+            // since the player tried to open the ender storage it is considered "complete",
             // so to prevent re-colorings in the future, we lock it
             if (!isTrue(EnderStorageKeys.locked)) {
                 setTrue(EnderStorageKeys.locked)
@@ -161,9 +159,7 @@ class EnderStorageUseListener(
                 enderChest.world.playSound(enderChest.location, Sound.BLOCK_CHEST_LOCKED, 1.0f, 1.0f)
                 enderChest.world.spawnParticle(Particle.END_ROD, enderChest.location, 20, 0.5, 0.5, 0.5, 0.0)
 
-                event.player.successActionBar("This Ender Chest is now locked.")
-
-                logger.info("Player ${event.player.name} locked ender chest at ${enderChest.location} with pattern $key")
+                event.player.successActionBar("This Ender Storage is now locked.")
             }
         }
     }
@@ -177,7 +173,7 @@ class EnderStorageUseListener(
         if (key.isEmpty()) return
 
         storage.markDirty(key)
-        logger.info("Marked ender chest channel '$key' as dirty for saving.")
+        logger.finer("Marked ender chest channel '$key' as dirty for saving.")
     }
 
 }

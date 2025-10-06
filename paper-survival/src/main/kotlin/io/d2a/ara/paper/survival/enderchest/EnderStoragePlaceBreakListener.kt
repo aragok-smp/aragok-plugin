@@ -1,9 +1,6 @@
 package io.d2a.ara.paper.survival.enderchest
 
-import io.d2a.ara.paper.base.extension.getUniqueId
-import io.d2a.ara.paper.base.extension.persist
-import io.d2a.ara.paper.base.extension.setInt
-import io.d2a.ara.paper.base.extension.setString
+import io.d2a.ara.paper.base.extension.*
 import org.bukkit.*
 import org.bukkit.block.BlockFace
 import org.bukkit.block.EnderChest
@@ -116,12 +113,14 @@ class EnderStoragePlaceBreakListener(
         }
 
         if (leftDisplayUuid == null || middleDisplayUuid == null || rightDisplayUuid == null) {
-            throw IllegalStateException("Failed to spawn all display entities for ender chest at ${enderChest.location}")
+            throw IllegalStateException("Failed to spawn all display entities for ender storage at ${enderChest.location}")
         }
         // note: interactions cannot be null at this point
 
         // store the UUIDs of the displays and interactions in the ender chest's persistent data container
         enderChest.persist {
+            setTrue(EnderStorageKeys.item)
+
             setString(EnderStorageKeys.left, DyeColor.WHITE.name)
             setString(EnderStorageKeys.middle, DyeColor.WHITE.name)
             setString(EnderStorageKeys.right, DyeColor.WHITE.name)
@@ -160,7 +159,7 @@ class EnderStoragePlaceBreakListener(
     fun onEnderChestPlace(event: BlockPlaceEvent) {
         if (event.block.type != Material.ENDER_CHEST) return
 
-        // make sure it's our special ender chest item
+        // make sure it's our special ender storage item
         if (!event.itemInHand.persistentDataContainer.has(EnderStorageKeys.item)) return
 
         val enderChest = event.block.state as? EnderChest ?: return
@@ -168,19 +167,19 @@ class EnderStoragePlaceBreakListener(
         spawnEnderChestWithStripes(enderChest)
         playEnderStoragePlaceEffect(enderChest)
 
-        logger.info("Player ${event.player.name} placed an ender chest at ${enderChest.location}")
+        logger.info("Player ${event.player.name} placed an ender storage at ${enderChest.location}")
     }
 
-    // remove interactions when the ender chest is broken
+    // remove interactions when the ender storage is broken
     @EventHandler(
         priority = EventPriority.HIGHEST,
         ignoreCancelled = true
     )
     fun onEnderChestBreak(event: BlockBreakEvent) {
         if (event.block.type != Material.ENDER_CHEST) return
-        // TODO: check if it's a special ender chest
 
         val enderChest = event.block.state as? EnderChest ?: return
+        if (!enderChest.persistentDataContainer.has(EnderStorageKeys.item)) return
         removeAllEntities(enderChest)
 
         // prevent abuse -> the chest gets destroyed
@@ -189,7 +188,7 @@ class EnderStoragePlaceBreakListener(
 
         playEnderStorageBreakEffect(enderChest)
 
-        logger.info("Player ${event.player.name} broke an ender chest at ${enderChest.location}")
+        logger.info("Player ${event.player.name} broke an ender storage at ${enderChest.location}")
     }
 
     // if you can see this code, this means ChatGPT cooked

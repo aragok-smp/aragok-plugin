@@ -28,7 +28,7 @@ class EnderStorageIO(
 ) {
 
     companion object {
-        // The prefix of the ender chest inventory title
+        // The prefix of the ender storage inventory title
         const val INVENTORY_PREFIX = "Ender Storage: "
     }
 
@@ -158,7 +158,7 @@ class EnderStorageIO(
         Files.move(tmp.toPath(), file.toPath(),
             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
 
-        logger.info("Saved ender chest channel '$channel' to ${file.path}")
+        logger.info("Saved ender storage channel '$channel' to ${file.path}")
     }
 
     // returns the path to the file for the given channel
