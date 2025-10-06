@@ -3,10 +3,7 @@ package io.d2a.ara.paper.survival.enderchest
 import io.d2a.ara.paper.base.custom.CustomItems.Companion.NAMESPACE
 import io.d2a.ara.paper.base.extension.*
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
-import org.bukkit.DyeColor
-import org.bukkit.Material
-import org.bukkit.NamespacedKey
-import org.bukkit.Sound
+import org.bukkit.*
 import org.bukkit.block.EnderChest
 import org.bukkit.entity.Display
 import org.bukkit.entity.Interaction
@@ -223,7 +220,9 @@ class EnderChestPlaceBreakListener(
         // TODO: check if it's a special ender chest
 
         val enderChest = event.block.state as? EnderChest ?: return
+
         spawnEnderChestWithStripes(enderChest, EnderChestPattern.default())
+//        enderChest.world.playSound(enderChest.location, Sound.)
     }
 
     // remove interactions when the ender chest is broken
@@ -266,7 +265,13 @@ class EnderChestPlaceBreakListener(
         // prevent re-coloring when locked
         // this should prevent abuse => infinite inventory space when re-coloring
         if (enderChest.persistentDataContainer.isTrue(Stripes.PDC_LOCKED)) {
-            player.failActionBar("This Ender Chest is locked and cannot be re-colored.", sound = VILLAGER_NO_SOUND)
+            player.failActionBar(
+                "This Ender Storage is locked.",
+                sound = Sound.BLOCK_SNIFFER_EGG_PLOP.toAdventure()
+                    .volume(1.0f)
+                    .pitch(2.0f)
+                    .build()
+            )
             return
         }
 
@@ -278,7 +283,12 @@ class EnderChestPlaceBreakListener(
         println("which corresponds to glass item ${glassItem.type.name}")
 
         updateStripeColor(enderChest, patternPartIndex, glassItem, dyeColor.name)
-        println("updated ender chest at ${enderChest.location} stripe index $patternPartIndex to color ${dyeColor.name}")
+
+        enderChest.world.playSound(
+            enderChest.location,
+            Sound.AMBIENT_UNDERWATER_ENTER,
+            1.0f, 2.0f
+        )
 
         // consume the item
         if (item.amount > 1) {
@@ -286,6 +296,8 @@ class EnderChestPlaceBreakListener(
         } else {
             player.inventory.setItemInMainHand(null)
         }
+
+        logger.info("player ${player.name} re-colored ender chest at ${enderChest.location} stripe index $patternPartIndex to color ${dyeColor.name}")
     }
 
     fun patternKeyOf(vararg keys: String): String = keys.joinToString("-")
@@ -310,7 +322,7 @@ class EnderChestPlaceBreakListener(
 
         if (event.player.isSneaking) return
 
-        event.player.successActionBar("Opening Ender Storage $key...")
+        event.player.successActionBar("...")
         val sharedInventory = storage.getOrCreateInventory(key)
 
         event.player.openInventory(sharedInventory)
@@ -325,10 +337,16 @@ class EnderChestPlaceBreakListener(
                     Sound.BLOCK_CHEST_LOCKED,
                     1.0f, 1.0f
                 )
+                enderChest.world.spawnParticle(Particle.END_ROD, enderChest.location, 20, 0.5, 0.5, 0.5, 0.0)
 
                 event.player.successActionBar("This Ender Chest is now locked.")
-
-                logger.info("Locked ender chest at ${enderChest.location} with pattern $key")
+                logger.info("Player ${event.player.name} locked ender chest at ${enderChest.location} with pattern $key")
+            } else {
+                enderChest.world.playSound(
+                    enderChest.location,
+                    Sound.BLOCK_ENDER_CHEST_OPEN,
+                    1.0f, 0.9f
+                )
             }
         }
     }
