@@ -21,7 +21,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  * - Inventories created/loaded on first access
  */
 @OptIn(ExperimentalAtomicApi::class)
-class EnderChestStorage(
+class EnderStorageIO(
     private val plugin: Plugin,
     private val folder: File = File(plugin.dataFolder, "channels"),
     private val inventorySize: Int = 27,

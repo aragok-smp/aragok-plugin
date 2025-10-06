@@ -21,9 +21,9 @@ import org.bukkit.inventory.ItemStack
 import java.util.*
 import java.util.logging.Logger
 
-class EnderChestUseListener(
+class EnderStorageUseListener(
     val logger: Logger,
-    val storage: EnderChestStorage
+    val storage: EnderStorageIO
 ) : Listener {
 
     companion object {
@@ -171,9 +171,9 @@ class EnderChestUseListener(
     @EventHandler
     fun onEnderChestClose(event: InventoryCloseEvent) {
         val title = PLAIN.serialize(event.view.title())
-        if (!title.startsWith(EnderChestStorage.INVENTORY_PREFIX)) return
+        if (!title.startsWith(EnderStorageIO.INVENTORY_PREFIX)) return
 
-        val key = title.removePrefix(EnderChestStorage.INVENTORY_PREFIX).trim()
+        val key = title.removePrefix(EnderStorageIO.INVENTORY_PREFIX).trim()
         if (key.isEmpty()) return
 
         storage.markDirty(key)

@@ -30,7 +30,7 @@ import org.bukkit.plugin.java.JavaPlugin
 class AragokPaperSurvival : JavaPlugin() {
 
     private var borderTask: BorderTask? = null
-    private var enderStorage: EnderChestStorage? = null
+    private var enderStorageIO: EnderStorageIO? = null
 
     val devNullRecipeKey = NamespacedKey(this, "dev_null")
     val enrichedCoalRecipeKey = NamespacedKey(this, "enriched_coal")
@@ -90,7 +90,7 @@ class AragokPaperSurvival : JavaPlugin() {
     override fun onDisable() {
         closeQuietly(borderTask, "BorderTask")
 
-        enderStorage?.let {
+        enderStorageIO?.let {
             it.stopAutosave()
             it.flushAllSync()
         }
@@ -263,14 +263,14 @@ class AragokPaperSurvival : JavaPlugin() {
                 .setIngredient('N', Material.NETHERITE_SCRAP)
         )
 
-        val storage = EnderChestStorage(this).apply {
+        val storage = EnderStorageIO(this).apply {
             startAutosave(intervalSeconds = 300)
         }
-        enderStorage = storage
+        enderStorageIO = storage
 
         registerEvents(
-            EnderChestPlaceBreakListener(logger),
-            EnderChestUseListener(logger, storage)
+            EnderStoragePlaceBreakListener(logger),
+            EnderStorageUseListener(logger, storage)
         )
     }
 

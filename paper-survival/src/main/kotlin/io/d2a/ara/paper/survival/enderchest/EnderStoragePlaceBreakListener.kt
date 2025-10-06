@@ -25,7 +25,7 @@ import org.joml.Vector3f
 import java.util.*
 import java.util.logging.Logger
 
-class EnderChestPlaceBreakListener(
+class EnderStoragePlaceBreakListener(
     val logger: Logger,
 ) : Listener {
 
