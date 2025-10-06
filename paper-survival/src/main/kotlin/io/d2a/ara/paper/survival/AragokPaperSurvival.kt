@@ -12,6 +12,8 @@ import io.d2a.ara.paper.survival.commands.TrashCommand
 import io.d2a.ara.paper.survival.devnull.CraftBagListener
 import io.d2a.ara.paper.survival.devnull.DevNullItem
 import io.d2a.ara.paper.survival.devnull.ItemPickupDevNullListener
+import io.d2a.ara.paper.survival.enderchest.EnderChestChannelStorage
+import io.d2a.ara.paper.survival.enderchest.EnderChestPlaceBreakListener
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toEssenceItem
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toUnusedPowderItem
 import io.d2a.ara.paper.survival.floo.FlooUseListeners
@@ -29,6 +31,7 @@ import org.bukkit.plugin.java.JavaPlugin
 class AragokPaperSurvival : JavaPlugin() {
 
     private var borderTask: BorderTask? = null
+    private var enderStorage: EnderChestChannelStorage? = null
 
     val devNullRecipeKey = NamespacedKey(this, "dev_null")
     val enrichedCoalRecipeKey = NamespacedKey(this, "enriched_coal")
@@ -75,12 +78,18 @@ class AragokPaperSurvival : JavaPlugin() {
         registerDevNullFeature()
         registerFlooFeature()
         registerHopperFeature()
+        registerEndStorageFeature()
 
         logger.info("Enabled aragok-survival")
     }
 
     override fun onDisable() {
         closeQuietly(borderTask, "BorderTask")
+
+        enderStorage?.let {
+            it.stopAutosave()
+            it.flushAllSync()
+        }
 
         logger.info("Disabled aragok-survival")
     }
@@ -231,6 +240,17 @@ class AragokPaperSurvival : JavaPlugin() {
             HopperFilterLifecycleListener(),
             HopperFilterEditor(),
         )
+    }
+
+    fun registerEndStorageFeature() {
+        logger.info("Registering ender storage feature...")
+
+        val storage = EnderChestChannelStorage(this).apply {
+            startAutosave(intervalSeconds = 300)
+        }
+        enderStorage = storage
+
+        registerEvents(EnderChestPlaceBreakListener(logger, storage))
     }
 
 }
