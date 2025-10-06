@@ -35,16 +35,16 @@ enum class CoalType(
         "Infused Coal",
         ItemRarity.RARE,
         3.0f, // has the longest burn time
-        0.60f,
-        0.8f // 100 items -> around 8 extra items
+        0.6f,
+        0.08f // 100 items -> around 8 extra items
     ),
     SUPERCHARGED(
         NamespacedKey(NAMESPACE, "supercharged_coal"),
         "Supercharged Coal",
         ItemRarity.EPIC,
         3.2f, // just slightly better burn time
-        0.10f,
-        0.15f // 100 items -> around 15 extra items
+        0.1f,
+        0.18f // 100 items -> around 18 extra items
     );
 
 
