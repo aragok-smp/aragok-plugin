@@ -209,7 +209,7 @@ class EnderStoragePlaceBreakListener(
         val teal = Particle.DustOptions(Color.fromRGB(0x20, 0xFF, 0xCF), 1.1f)
 
         // base flash
-        world.spawnParticle(Particle.FLASH, loc, 1)
+        world.spawnParticle(Particle.FLASH, loc, 1, teal.color)
         world.spawnParticle(Particle.DUST, loc, 20, 0.4, 0.06, 0.4, 0.0, teal)
         world.spawnParticle(Particle.PORTAL, loc, 12, 0.25, 0.05, 0.25, 0.2)
 
@@ -249,7 +249,7 @@ class EnderStoragePlaceBreakListener(
         val purple = Particle.DustOptions(Color.fromRGB(0x9B, 0x5D, 0xE5), 1.0f)
 
         // Base puff + implosion sparks
-        world.spawnParticle(Particle.FLASH, loc, 1)
+        world.spawnParticle(Particle.FLASH, loc, 1, teal.color)
         world.spawnParticle(Particle.PORTAL, loc, 25, 0.4, 0.1, 0.4, 0.2)
         world.spawnParticle(Particle.END_ROD, loc, 15, 0.25, 0.2, 0.25, 0.01)
         world.spawnParticle(Particle.REVERSE_PORTAL, loc, 20, 0.3, 0.2, 0.3, 0.0)
