@@ -4,8 +4,7 @@ import io.d2a.ara.paper.base.extension.getUniqueId
 import io.d2a.ara.paper.base.extension.persist
 import io.d2a.ara.paper.base.extension.setInt
 import io.d2a.ara.paper.base.extension.setString
-import org.bukkit.DyeColor
-import org.bukkit.Material
+import org.bukkit.*
 import org.bukkit.block.BlockFace
 import org.bukkit.block.EnderChest
 import org.bukkit.block.data.Directional
@@ -160,14 +159,14 @@ class EnderChestPlaceBreakListener(
     )
     fun onEnderChestPlace(event: BlockPlaceEvent) {
         if (event.block.type != Material.ENDER_CHEST) return
-        // TODO: check if it's a special ender chest
+
+        // make sure it's our special ender chest item
+        if (!event.itemInHand.persistentDataContainer.has(EnderStorageKeys.item)) return
 
         val enderChest = event.block.state as? EnderChest ?: return
 
         spawnEnderChestWithStripes(enderChest)
-
-        // TODO: play particles
-        // TODO: play sound
+        playEnderStoragePlaceEffect(enderChest)
 
         logger.info("Player ${event.player.name} placed an ender chest at ${enderChest.location}")
     }
@@ -188,7 +187,92 @@ class EnderChestPlaceBreakListener(
         event.isDropItems = false
         event.expToDrop = 15
 
+        playEnderStorageBreakEffect(enderChest)
+
         logger.info("Player ${event.player.name} broke an ender chest at ${enderChest.location}")
     }
+
+    // if you can see this code, this means ChatGPT cooked
+    fun playEnderStoragePlaceEffect(enderChest: EnderChest) {
+        val world = enderChest.world
+        val loc = enderChest.location.clone().add(0.5, 0.9, 0.5)
+
+        val facing = (enderChest.blockData as? Directional)?.facing ?: BlockFace.NORTH
+        val left = when (facing) {
+            BlockFace.NORTH -> Vector(-1.0, 0.0,  0.0)
+            BlockFace.SOUTH -> Vector( 1.0, 0.0,  0.0)
+            BlockFace.WEST  -> Vector( 0.0, 0.0,  1.0)
+            BlockFace.EAST  -> Vector( 0.0, 0.0, -1.0)
+            else -> Vector(-1.0, 0.0, 0.0)
+        }
+
+        // teal Dust
+        val teal = Particle.DustOptions(Color.fromRGB(0x20, 0xFF, 0xCF), 1.1f)
+
+        // base flash
+        world.spawnParticle(Particle.FLASH, loc, 1)
+        world.spawnParticle(Particle.DUST, loc, 20, 0.4, 0.06, 0.4, 0.0, teal)
+        world.spawnParticle(Particle.PORTAL, loc, 12, 0.25, 0.05, 0.25, 0.2)
+
+        // line of electric sparks along lid
+        for (t in -4..4) {
+            val p = loc.clone().add(left.clone().multiply(t / 8.0))
+            world.spawnParticle(Particle.ELECTRIC_SPARK, p, 1, 0.0, 0.0, 0.0, 0.0)
+        }
+
+        // gentle rising END_ROD twinkles
+        for (i in 0..10) {
+            val p = loc.clone().add(0.0, i * 0.06, 0.0)
+            world.spawnParticle(Particle.END_ROD, p, 2, 0.15, 0.00, 0.15, 0.0)
+        }
+
+        // sounds
+        world.playSound(loc, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.5f)
+        world.playSound(loc, Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.8f, 1.2f)
+        world.playSound(loc, Sound.BLOCK_ENDER_CHEST_OPEN, 0.8f, 1.0f)
+    }
+
+    fun playEnderStorageBreakEffect(enderChest: EnderChest) {
+        val world = enderChest.world
+        val loc = enderChest.location.clone().add(0.5, 0.9, 0.5)
+
+        val facing = (enderChest.blockData as? Directional)?.facing ?: BlockFace.NORTH
+        val forward = when (facing) {
+            BlockFace.NORTH -> Vector(0.0, 0.0, -1.0)
+            BlockFace.SOUTH -> Vector(0.0, 0.0, 1.0)
+            BlockFace.WEST  -> Vector(-1.0, 0.0, 0.0)
+            BlockFace.EAST  -> Vector(1.0, 0.0, 0.0)
+            else -> Vector(0.0, 0.0, 1.0)
+        }
+
+        // Dust color (teal → purple)
+        val teal = Particle.DustOptions(Color.fromRGB(0x20, 0xFF, 0xCF), 1.2f)
+        val purple = Particle.DustOptions(Color.fromRGB(0x9B, 0x5D, 0xE5), 1.0f)
+
+        // Base puff + implosion sparks
+        world.spawnParticle(Particle.FLASH, loc, 1)
+        world.spawnParticle(Particle.PORTAL, loc, 25, 0.4, 0.1, 0.4, 0.2)
+        world.spawnParticle(Particle.END_ROD, loc, 15, 0.25, 0.2, 0.25, 0.01)
+        world.spawnParticle(Particle.REVERSE_PORTAL, loc, 20, 0.3, 0.2, 0.3, 0.0)
+        world.spawnParticle(Particle.DUST_COLOR_TRANSITION, loc, 25, 0.3, 0.1, 0.3, 0.0,
+            Particle.DustTransition(teal.color, purple.color, 1.0f)
+        )
+
+        // Directional shockwave (particles moving outwards)
+        for (i in -3..3) {
+            val offset = forward.clone().multiply(i * 0.1)
+            val p = loc.clone().add(offset)
+            world.spawnParticle(Particle.ELECTRIC_SPARK, p, 2, 0.02, 0.02, 0.02, 0.0)
+        }
+
+        // Rising obsidian tears (slow)
+        world.spawnParticle(Particle.FALLING_OBSIDIAN_TEAR, loc, 8, 0.3, 0.2, 0.3, 0.02)
+
+        // Sounds: deep implosion → crystal crack → chest break
+        world.playSound(loc, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.8f, 0.9f)
+        world.playSound(loc, Sound.BLOCK_AMETHYST_BLOCK_BREAK, 0.8f, 1.0f)
+        world.playSound(loc, Sound.BLOCK_ENDER_CHEST_CLOSE, 0.7f, 1.0f)
+    }
+
 
 }

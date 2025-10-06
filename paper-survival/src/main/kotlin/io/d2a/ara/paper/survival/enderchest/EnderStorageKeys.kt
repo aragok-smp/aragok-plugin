@@ -1,9 +1,13 @@
 package io.d2a.ara.paper.survival.enderchest
 
+import io.d2a.ara.paper.base.custom.CustomItems.Companion.NAMESPACE
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
 
 object EnderStorageKeys {
+
+    var item = NamespacedKey(NAMESPACE, "ender_storage_item")
+        private set
 
     // Stripe data
     lateinit var left: NamespacedKey
