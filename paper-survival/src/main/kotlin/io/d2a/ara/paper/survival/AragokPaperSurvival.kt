@@ -12,6 +12,7 @@ import io.d2a.ara.paper.survival.commands.TrashCommand
 import io.d2a.ara.paper.survival.devnull.CraftBagListener
 import io.d2a.ara.paper.survival.devnull.DevNullItem
 import io.d2a.ara.paper.survival.devnull.ItemPickupDevNullListener
+import io.d2a.ara.paper.survival.enderchest.*
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toEssenceItem
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toUnusedPowderItem
 import io.d2a.ara.paper.survival.floo.FlooUseListeners
@@ -29,6 +30,7 @@ import org.bukkit.plugin.java.JavaPlugin
 class AragokPaperSurvival : JavaPlugin() {
 
     private var borderTask: BorderTask? = null
+    private var enderStorageIO: EnderStorageIO? = null
 
     val devNullRecipeKey = NamespacedKey(this, "dev_null")
     val enrichedCoalRecipeKey = NamespacedKey(this, "enriched_coal")
@@ -43,8 +45,13 @@ class AragokPaperSurvival : JavaPlugin() {
     val denyHopperFilterRecipeKey = NamespacedKey(this, "hopper_filter_deny")
     val deleteHopperFilterRecipeKey = NamespacedKey(this, "hopper_filter_delete")
 
+    // ender storage
+    val enderStorageRecipeKey = NamespacedKey(this, "ender_storage")
+
 
     override fun onEnable() {
+        EnderStorageKeys.init(this)
+
         // start activity service
         val activityService = getService<ActivityService>()
             ?: return disableWithError("ActivityService not found")
@@ -75,12 +82,18 @@ class AragokPaperSurvival : JavaPlugin() {
         registerDevNullFeature()
         registerFlooFeature()
         registerHopperFeature()
+        registerEndStorageFeature()
 
         logger.info("Enabled aragok-survival")
     }
 
     override fun onDisable() {
         closeQuietly(borderTask, "BorderTask")
+
+        enderStorageIO?.let {
+            it.stopAutosave()
+            it.flushAllSync()
+        }
 
         logger.info("Disabled aragok-survival")
     }
@@ -230,6 +243,34 @@ class AragokPaperSurvival : JavaPlugin() {
             SmartHopperPlaceBreakListener(logger),
             HopperFilterLifecycleListener(),
             HopperFilterEditor(),
+        )
+    }
+
+    fun registerEndStorageFeature() {
+        logger.info("Registering ender storage feature...")
+
+        registerRecipe(
+            ShapedRecipe(
+                enderStorageRecipeKey,
+                EnderStorageItem.toItem(),
+            )
+                .shape("OEO", "ACB", "ONO")
+                .setIngredient('O', Material.OBSIDIAN)
+                .setIngredient('E', Material.ENDER_EYE)
+                .setIngredient('A', Material.AMETHYST_SHARD)
+                .setIngredient('C', Material.ENDER_CHEST)
+                .setIngredient('B', Material.BLAZE_ROD)
+                .setIngredient('N', Material.NETHERITE_SCRAP)
+        )
+
+        val storage = EnderStorageIO(this).apply {
+            startAutosave(intervalSeconds = 300)
+        }
+        enderStorageIO = storage
+
+        registerEvents(
+            EnderStoragePlaceBreakListener(logger),
+            EnderStorageUseListener(logger, storage)
         )
     }
 

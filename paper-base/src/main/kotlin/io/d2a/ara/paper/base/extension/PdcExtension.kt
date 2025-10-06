@@ -5,6 +5,7 @@ import org.bukkit.NamespacedKey
 import org.bukkit.block.TileState
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
+import java.util.*
 
 /**
  * Sets a string value in the persistent data container.
@@ -22,6 +23,12 @@ fun PersistentDataContainer.getString(key: NamespacedKey): String? =
 
 fun PersistentDataContainerView.getString(key: NamespacedKey): String? =
     this.get(key, PersistentDataType.STRING)
+
+fun PersistentDataContainer.getUniqueId(key: NamespacedKey): UUID? =
+    this.get(key, PersistentDataType.STRING)?.let { UUID.fromString(it) }
+
+fun PersistentDataContainer.setUniqueId(key: NamespacedKey, value: UUID) =
+    this.setString(key, value.toString())
 
 /**
  * Sets an integer value in the persistent data container.
