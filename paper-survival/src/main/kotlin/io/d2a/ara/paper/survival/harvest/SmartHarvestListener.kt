@@ -14,14 +14,6 @@ class SmartHarvestListener(
     val logger: Logger,
 ) : Listener {
 
-    private val harvestableBlocks = setOf(
-        Material.WHEAT,
-        Material.CARROT,
-        Material.POTATO,
-        Material.BEETROOTS,
-        Material.NETHER_WART,
-    )
-
     @EventHandler
     fun onPlayerInteract(event: PlayerInteractEvent) {
         val player = event.player
@@ -41,24 +33,22 @@ class SmartHarvestListener(
         if (tool.enchantments.keys.none { it.key() == Constants.GREEN_THUMB }) return
 
         val block = event.clickedBlock ?: return
-
         val type = block.type
-        if (type !in harvestableBlocks) return
 
-        // Check if block is fully grown
+        // Check if block is a crop and get corresponding seed type
+        val seed = getSeedTypeFromCrop(type) ?: return
+
+        // Check if crop is fully grown
         val ageable = block.blockData as? Ageable ?: return
         if (ageable.age < ageable.maximumAge) return
 
         event.isCancelled = true // Prevent default interaction
 
-        // break the seed
+        // break the block
         block.breakNaturally(tool)
 
-        // break the hoe
+        // damage the hoe
         player.damageItemStack(hand, 1)
-
-        // Check if player has same Material in inventory
-        val seed = getSeedTypeFromCrop(type) ?: return
 
         // try to remove the seed from inventory
         val seedRemoveResult = player.inventory.removeItem(ItemStack.of(seed))
