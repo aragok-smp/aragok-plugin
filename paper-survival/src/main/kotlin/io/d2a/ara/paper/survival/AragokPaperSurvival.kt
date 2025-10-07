@@ -49,7 +49,6 @@ class AragokPaperSurvival : JavaPlugin() {
     // ender storage
     val enderStorageRecipeKey = NamespacedKey(this, "ender_storage")
 
-
     override fun onEnable() {
         EnderStorageKeys.init(this)
 

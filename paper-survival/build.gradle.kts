@@ -1,15 +1,34 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.shadow)
 }
 
 dependencies {
     implementation(project(":common"))
-    compileOnly(project(":paper-base"))
+    compileOnly(project(":paper-base", configuration = "shadow"))
 
     compileOnly("io.papermc.paper:paper-api:1.21.9-R0.1-SNAPSHOT")
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
 tasks {
+    compileJava {
+        options.encoding = "UTF-8"
+        options.release.set(21)
+    }
+
+    compileKotlin {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_21
+        }
+    }
+
     shadowJar {
         archiveClassifier.set("")
         mergeServiceFiles()

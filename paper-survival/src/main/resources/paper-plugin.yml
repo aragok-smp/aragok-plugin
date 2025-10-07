@@ -1,6 +1,9 @@
 name: aragok-paper-survival
 version: '${version}'
+
 main: io.d2a.ara.paper.survival.AragokPaperSurvival
+bootstrapper: io.d2a.ara.paper.survival.AragokPaperSurvivalBootstrap
+
 api-version: '1.21'
 
 dependencies:

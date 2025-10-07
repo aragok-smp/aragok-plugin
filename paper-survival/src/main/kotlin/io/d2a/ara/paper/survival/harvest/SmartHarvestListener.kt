@@ -1,12 +1,12 @@
 package io.d2a.ara.paper.survival.harvest
 
+import io.d2a.ara.paper.survival.Constants
 import org.bukkit.Material
-import org.bukkit.block.Block
 import org.bukkit.block.data.Ageable
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import java.util.logging.Logger
 
@@ -25,64 +25,63 @@ class SmartHarvestListener(
     @EventHandler
     fun onPlayerInteract(event: PlayerInteractEvent) {
         val player = event.player
+        if (event.action != Action.RIGHT_CLICK_BLOCK) return
+
         val hand = event.hand ?: return
-        if (hand != EquipmentSlot.OFF_HAND) { // only on off hand
-            return
-        }
-        logger.info { "OFF Hand was used" }
+        val tool = player.inventory.getItem(hand)
+        if (tool.type != Material.WOODEN_HOE &&
+            tool.type != Material.COPPER_HOE &&
+            tool.type != Material.STONE_HOE &&
+            tool.type != Material.IRON_HOE &&
+            tool.type != Material.GOLDEN_HOE &&
+            tool.type != Material.DIAMOND_HOE &&
+            tool.type != Material.NETHERITE_HOE
+        ) return
+
+        if (tool.enchantments.keys.none { it.key() == Constants.GREEN_THUMB }) return
 
         val block = event.clickedBlock ?: return
+
         val type = block.type
-        val data = block.blockData
-        logger.info("Clicked Block ${block.type}")
-        if (block.type !in harvestableBlocks) {
-            return
-        }
+        if (type !in harvestableBlocks) return
 
         // Check if block is fully grown
-        if (!isHarvestable(block)) {
-            return
-        }
-        logger.info("Block is ready to harvest")
+        val ageable = block.blockData as? Ageable ?: return
+        if (ageable.age < ageable.maximumAge) return
 
         event.isCancelled = true // Prevent default interaction
-        block.breakNaturally()
+
+        // break the seed
+        block.breakNaturally(tool)
+
+        // break the hoe
+        player.damageItemStack(hand, 1)
 
         // Check if player has same Material in inventory
         val seed = getSeedTypeFromCrop(type) ?: return
-        val hasItemInInventory = player.inventory.contains(seed)
-        logger.info { "Has item in inventory? => $hasItemInInventory" }
-        if (!hasItemInInventory) {
-            return
-        }
 
-        // Remove one item from inventory
-        player.inventory.removeItem(ItemStack(seed, 1))
+        // try to remove the seed from inventory
+        val seedRemoveResult = player.inventory.removeItem(ItemStack.of(seed))
+        if (seedRemoveResult.isNotEmpty()) return // we couldn't remove a seed => they probably don't have it
+
+        val newAgeable = ageable.clone() as? Ageable ?: return
+        newAgeable.age = 0
 
         // Replant the crop
         block.type = type
-        if (data is Ageable) {
-            data.age = 0
-        }
-        block.blockData = data
+        block.blockData = newAgeable
     }
+
 
     fun getSeedTypeFromCrop(crop: Material): Material? {
         return when (crop) {
             Material.WHEAT -> Material.WHEAT_SEEDS
-            Material.CARROT -> Material.CARROT
-            Material.POTATO -> Material.POTATO
+            Material.CARROTS -> Material.CARROT
+            Material.POTATOES -> Material.POTATO
             Material.BEETROOTS -> Material.BEETROOT_SEEDS
             Material.NETHER_WART -> Material.NETHER_WART
             else -> null
         }
     }
 
-    fun isHarvestable(block: Block): Boolean {
-        val data = block.blockData
-        return when {
-            data is Ageable && data.age == data.maximumAge -> true
-            else -> false
-        }
-    }
 }
