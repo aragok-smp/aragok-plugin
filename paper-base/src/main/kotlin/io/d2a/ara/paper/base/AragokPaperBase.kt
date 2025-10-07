@@ -3,6 +3,7 @@ package io.d2a.ara.paper.base
 import io.d2a.ara.paper.base.activity.ActivityService
 import io.d2a.ara.paper.base.activity.PlayerMovementActivity
 import io.d2a.ara.paper.base.commands.AwayCommand
+import io.d2a.ara.paper.base.commands.MaintenanceCommand
 import io.d2a.ara.paper.base.commands.PrivilegesCommand
 import io.d2a.ara.paper.base.custom.PlayerJoinRecipeDiscoveryService
 import io.d2a.ara.paper.base.custom.PreventCraftingListener
@@ -11,6 +12,7 @@ import io.d2a.ara.paper.base.extension.*
 import io.d2a.ara.paper.base.flair.*
 import io.d2a.ara.paper.base.flair.listener.InjectFlairToChatListener
 import io.d2a.ara.paper.base.flair.listener.UpdatePlayerTagOnJoinLeaveListener
+import io.d2a.ara.paper.base.maintenance.ServerStopListener
 import net.luckperms.api.LuckPerms
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -34,9 +36,15 @@ class AragokPaperBase : JavaPlugin() {
         val recipeDiscovery = withListenerRegistration(PlayerJoinRecipeDiscoveryService(logger))
         registerService<RecipeDiscoveryService>(recipeDiscovery)
 
+
         registerCommands(
             PrivilegesCommand(luckPerms),
-            AwayCommand(activityService)
+            AwayCommand(activityService),
+            MaintenanceCommand(
+                withListenerRegistration(
+                    ServerStopListener(this, adminPermission = PrivilegesCommand.USE_PERMISSION)
+                )
+            )
         )
 
         registerFlairFeature(luckPerms, activityService)
