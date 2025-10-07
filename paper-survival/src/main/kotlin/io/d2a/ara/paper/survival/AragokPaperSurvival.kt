@@ -17,6 +17,7 @@ import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toEssenceItem
 import io.d2a.ara.paper.survival.floo.FlooItem.Companion.toUnusedPowderItem
 import io.d2a.ara.paper.survival.floo.FlooUseListeners
 import io.d2a.ara.paper.survival.floo.WitchDropEssenceListener
+import io.d2a.ara.paper.survival.harvest.SmartHarvestListener
 import io.d2a.ara.paper.survival.hopper.*
 import io.d2a.ara.paper.survival.restriction.DimensionRestriction
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
@@ -83,6 +84,7 @@ class AragokPaperSurvival : JavaPlugin() {
         registerFlooFeature()
         registerHopperFeature()
         registerEndStorageFeature()
+        registerHarvestFeature()
 
         logger.info("Enabled aragok-survival")
     }
@@ -271,6 +273,14 @@ class AragokPaperSurvival : JavaPlugin() {
         registerEvents(
             EnderStoragePlaceBreakListener(logger),
             EnderStorageUseListener(logger, storage)
+        )
+    }
+
+    fun registerHarvestFeature() {
+        logger.info("Registering smart harvest feature...")
+
+        registerEvents(
+            SmartHarvestListener(logger)
         )
     }
 
