@@ -6,10 +6,8 @@ import io.d2a.ara.paper.survival.activity.ActivityChangedNotifier
 import io.d2a.ara.paper.survival.border.BorderTask
 import io.d2a.ara.paper.survival.coal.CoalType.*
 import io.d2a.ara.paper.survival.coal.FurnaceSmeltCoalListener
-import io.d2a.ara.paper.survival.coal.PickUpCoalEvent
 import io.d2a.ara.paper.survival.commands.RestrictionCommand
 import io.d2a.ara.paper.survival.commands.TrashCommand
-import io.d2a.ara.paper.survival.devnull.CraftBagListener
 import io.d2a.ara.paper.survival.devnull.DevNullItem
 import io.d2a.ara.paper.survival.devnull.ItemPickupDevNullListener
 import io.d2a.ara.paper.survival.enderchest.*
@@ -19,6 +17,7 @@ import io.d2a.ara.paper.survival.floo.FlooUseListeners
 import io.d2a.ara.paper.survival.floo.WitchDropEssenceListener
 import io.d2a.ara.paper.survival.harvest.SmartHarvestListener
 import io.d2a.ara.paper.survival.hopper.*
+import io.d2a.ara.paper.survival.listeners.PickUpCraftUnlockRecipeListener
 import io.d2a.ara.paper.survival.restriction.DimensionRestriction
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
 import org.bukkit.Material
@@ -139,11 +138,10 @@ class AragokPaperSurvival : JavaPlugin() {
 
         registerEvents(
             FurnaceSmeltCoalListener(),
-            PickUpCoalEvent(
-                enrichedCoalRecipeKey,
-                enrichedCharcoalRecipeKey,
-                infusedCoalRecipeKey,
-                superchargedCoalRecipeKey
+            PickUpCraftUnlockRecipeListener(
+                logger,
+                setOf(Material.COAL, Material.CHARCOAL),
+                setOf(enrichedCoalRecipeKey, enrichedCharcoalRecipeKey, infusedCoalRecipeKey, superchargedCoalRecipeKey)
             )
         )
     }
@@ -166,7 +164,13 @@ class AragokPaperSurvival : JavaPlugin() {
 
         registerEvents(
             ItemPickupDevNullListener(),
-            CraftBagListener(devNullRecipeKey)
+            PickUpCraftUnlockRecipeListener(
+                logger,
+                Material.entries.filter { material ->
+                    material == Material.BUNDLE || material.name.endsWith("_BUNDLE")
+                }.toSet(),
+                setOf(devNullRecipeKey),
+            )
         )
     }
 
@@ -204,38 +208,29 @@ class AragokPaperSurvival : JavaPlugin() {
                 .addIngredient(1, Material.COMPARATOR)
                 .addIngredient(1, Material.QUARTZ),
 
-            ShapedRecipe(
+            ShapelessRecipe(
                 acceptHopperFilterRecipeKey,
                 HopperFilterItem.toItem(HopperFilterItem.HopperFilterType.ALLOW),
-            ).shape("IGI", "RHC", "IQI")
-                .setIngredient('I', Material.IRON_INGOT)
-                .setIngredient('G', Material.GREEN_DYE)
-                .setIngredient('R', Material.REDSTONE)
-                .setIngredient('H', Material.HOPPER)
-                .setIngredient('C', Material.COMPARATOR)
-                .setIngredient('Q', Material.QUARTZ),
+            )
+                .addIngredient(1, Material.HOPPER)
+                .addIngredient(1, Material.GREEN_DYE)
+                .addIngredient(1, Material.COMPARATOR),
 
-            ShapedRecipe(
+            ShapelessRecipe(
                 denyHopperFilterRecipeKey,
                 HopperFilterItem.toItem(HopperFilterItem.HopperFilterType.DENY),
-            ).shape("IGI", "RHO", "IQI")
-                .setIngredient('I', Material.IRON_INGOT)
-                .setIngredient('G', Material.RED_DYE)
-                .setIngredient('R', Material.REDSTONE)
-                .setIngredient('H', Material.HOPPER)
-                .setIngredient('O', Material.OBSERVER)
-                .setIngredient('Q', Material.QUARTZ),
+            )
+                .addIngredient(1, Material.HOPPER)
+                .addIngredient(1, Material.RED_DYE)
+                .addIngredient(1, Material.OBSERVER),
 
-            ShapedRecipe(
+            ShapelessRecipe(
                 deleteHopperFilterRecipeKey,
                 HopperFilterItem.toItem(HopperFilterItem.HopperFilterType.DELETE),
-            ).shape("IGI", "RHC", "ITI")
-                .setIngredient('I', Material.IRON_INGOT)
-                .setIngredient('G', Material.PURPLE_DYE)
-                .setIngredient('R', Material.REDSTONE)
-                .setIngredient('H', Material.HOPPER)
-                .setIngredient('C', Material.COMPARATOR)
-                .setIngredient('T', Material.TNT),
+            )
+                .addIngredient(1, Material.HOPPER)
+                .addIngredient(1, Material.PURPLE_DYE)
+                .addIngredient(1, Material.TNT)
         )
 
         // prevent using hopper filter items
@@ -244,6 +239,16 @@ class AragokPaperSurvival : JavaPlugin() {
             SmartHopperPlaceBreakListener(logger),
             HopperFilterLifecycleListener(),
             HopperFilterEditor(),
+            PickUpCraftUnlockRecipeListener(
+                logger,
+                setOf(Material.HOPPER),
+                setOf(
+                    smartHopperRecipeKey,
+                    acceptHopperFilterRecipeKey,
+                    denyHopperFilterRecipeKey,
+                    deleteHopperFilterRecipeKey
+                )
+            )
         )
     }
 
@@ -271,7 +276,12 @@ class AragokPaperSurvival : JavaPlugin() {
 
         registerEvents(
             EnderStoragePlaceBreakListener(logger),
-            EnderStorageUseListener(logger, storage)
+            EnderStorageUseListener(logger, storage),
+            PickUpCraftUnlockRecipeListener(
+                logger,
+                setOf(Material.ENDER_CHEST),
+                setOf(enderStorageRecipeKey)
+            )
         )
     }
 

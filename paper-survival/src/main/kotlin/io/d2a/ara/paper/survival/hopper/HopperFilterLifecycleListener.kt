@@ -112,7 +112,7 @@ class HopperFilterLifecycleListener : Listener {
             .filter { (index, it) -> index != 0 && it != null && it.type != Material.AIR }
             .mapNotNull { (_, it) ->
                 val type = HopperFilterItem.getHopperFilterType(it) ?: return@mapNotNull null
-                val blockStateMeta = it?.itemMeta as? BlockStateMeta ?: return@mapNotNull null
+                val blockStateMeta = it!!.itemMeta as? BlockStateMeta ?: return@mapNotNull null
                 val shulkerBox = blockStateMeta.blockState as? ShulkerBox ?: return@mapNotNull null
                 Filter(type, shulkerBox)
             }
@@ -120,36 +120,47 @@ class HopperFilterLifecycleListener : Listener {
 
         if (filters.isEmpty()) return Result.VANILLA // no filters, behave like a normal hopper
 
-        val hasAnyDeny = filters.any { it.type == HopperFilterItem.HopperFilterType.DENY }
+        // special case: first filter has some implicit defaults
+        // if the first filter is an ACCEPT filter: default to deny all other
+        // if the first filter is an DENY filter: default to accept all other
+        // if the first filter is a DELETE filter: default to accept all other
+        //      this is useful if you want to delete some items, but allow the rest to go through.
+        var decision: Result = when (filters.first().type) {
+            HopperFilterItem.HopperFilterType.ALLOW -> Result.DENY
+            HopperFilterItem.HopperFilterType.DENY -> Result.ACCEPT
+            HopperFilterItem.HopperFilterType.DELETE -> Result.ACCEPT // all items after delete are considered ACCEPTED
+        }
 
-        var decision: Result? = null
-        for ((type, shulkerBox) in filters) {
-            val match = shulkerBoxMatchesFast(shulkerBox, stack)
+        // now our filters can override any implicit defaults
+        for ((index, filter) in filters.withIndex()) {
+            // check if the current item (candidate) matches any item in the shulker (=> filter)
+            val match = shulkerBoxMatchesFast(filter.shulker, stack)
             if (!match) continue
 
-            when (type) {
-                HopperFilterItem.HopperFilterType.ALLOW -> {
-                    decision = Result.ACCEPT // later rules can override
-                }
+            when (filter.type) {
+                // allow overrides any previous decision
+                HopperFilterItem.HopperFilterType.ALLOW -> decision = Result.ACCEPT
 
-                HopperFilterItem.HopperFilterType.DENY -> {
-                    decision = Result.DENY // later rules can override
-                }
+                // deny overrides any previous decision
+                HopperFilterItem.HopperFilterType.DENY -> decision = Result.DENY
 
+
+                // delete only applies when the previous decision was DENY.
+                // note it has consequences if DELETE is the first filter:
+                //      if we don't match the item in DELETE, the remaining items will still be considered DENY
                 HopperFilterItem.HopperFilterType.DELETE -> {
-                    // require accept decision
-                    if (decision == Result.ACCEPT) {
-                        return Result.DELETE
+                    // the deny filter expects the decision to be DENY.
+
+                    // if the deny filter is the first filter, it is also considered DENY thus deletes items.
+                    val isFirstFilter = index == 0
+                    if (isFirstFilter || decision == Result.DENY) {
+                        return Result.DELETE // deletion is considered final.
                     }
                 }
             }
         }
 
-        if (decision != null) {
-            return decision
-        }
-
-        return if (hasAnyDeny) Result.ACCEPT else Result.DENY
+        return decision
     }
 
     /**
