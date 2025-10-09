@@ -1,4 +1,4 @@
-package io.d2a.ara.paper.survival
+package io.d2a.ara.paper.survival.listeners
 
 import org.bukkit.Material
 import org.bukkit.NamespacedKey

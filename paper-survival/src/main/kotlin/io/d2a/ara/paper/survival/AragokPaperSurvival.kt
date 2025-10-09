@@ -17,6 +17,7 @@ import io.d2a.ara.paper.survival.floo.FlooUseListeners
 import io.d2a.ara.paper.survival.floo.WitchDropEssenceListener
 import io.d2a.ara.paper.survival.harvest.SmartHarvestListener
 import io.d2a.ara.paper.survival.hopper.*
+import io.d2a.ara.paper.survival.listeners.PickUpCraftUnlockRecipeListener
 import io.d2a.ara.paper.survival.restriction.DimensionRestriction
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
 import org.bukkit.Material
