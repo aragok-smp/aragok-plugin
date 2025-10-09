@@ -30,7 +30,9 @@ class HopperFilterEditor : Listener {
         val type: HopperFilterItem.HopperFilterType,
         val handSlot: Int,
         val inv: Inventory,
-        var returned: Boolean = false
+        var returned: Boolean = false,
+
+        var originalSlots: MutableSet<Int> = mutableSetOf()
     )
 
     private val sessions = mutableMapOf<UUID, Session>()
@@ -95,6 +97,8 @@ class HopperFilterEditor : Listener {
         val session = Session(player.uniqueId, filterType, player.inventory.heldItemSlot, inventory)
         sessions[player.uniqueId] = session
 
+        prefillFromFilter(item, inventory, session)
+
         player.openInventory(inventory)
     }
 
@@ -137,10 +141,21 @@ class HopperFilterEditor : Listener {
 
                 CONFIRM_SLOT -> {
                     event.isCancelled = true
-                    applyToFilter(player, session, top)
+                    if (programFilterFromTop(player, session, top)) {
+                        player.successActionBar("Filter updated.")
+                        player.playSound(player.location, Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 0.8f, 1.1f)
+                        closeAndCleanup(player)
+                    }
                 }
 
                 else -> {
+                    if (event.rawSlot in session.originalSlots) {
+                        // remove previously added items from originalSlots if player removes them
+                        event.isCancelled = true
+                        top.setItem(event.rawSlot, null)
+                        session.originalSlots.remove(event.rawSlot)
+                        player.playSound(player.location, Sound.UI_BUTTON_CLICK, 0.5f, 1.2f)
+                    }
                     // Only allow interaction on input slots; block background & buttons
                     if (event.rawSlot !in INPUT_SLOTS) {
                         event.isCancelled = true
@@ -179,76 +194,10 @@ class HopperFilterEditor : Listener {
 
         // If the player closes without Apply, return items
         if (!session.returned) {
-            returnItemsToPlayer(player, top)
+            programFilterFromTop(player, session, top)
             session.returned = true
         }
         cleanup(player)
-    }
-
-    private fun applyToFilter(player: Player, session: Session, top: Inventory) {
-        val samples = mutableListOf<ItemStack>()
-        for (slot in INPUT_SLOTS) {
-            val stack = top.getItem(slot) ?: continue
-            val one = stack.clone().apply { amount = 1 }
-            samples.add(one)
-        }
-
-        val hand = player.inventory.getItem(session.handSlot)
-        val filter = if (hand != null && HopperFilterItem.isHopperFilter(hand))
-            hand
-        else
-            player.inventory.contents.firstOrNull { it != null && HopperFilterItem.isHopperFilter(it) }
-
-        if (filter == null) {
-            player.failActionBar("Filter item not found anymore.", sound = VILLAGER_NO_SOUND)
-            return
-        }
-
-        val type = HopperFilterItem.getHopperFilterType(filter) ?: session.type
-        val programmed = HopperFilterItem.toItem(type)
-
-        val blockStateMeta = programmed.itemMeta as? BlockStateMeta
-        if (blockStateMeta == null) {
-            player.failActionBar("Unexpected: filter is not block state-able.")
-            return
-        }
-
-        val shulkerBox = blockStateMeta.blockState as? ShulkerBox
-        if (shulkerBox == null) {
-            player.failActionBar("Unexpected: filter is not a shulker box.")
-            return
-        }
-
-        // update the inventory of the shulker
-        shulkerBox.inventory.clear()
-        samples.forEach { shulkerBox.inventory.addItem(it) }
-        blockStateMeta.blockState = shulkerBox
-        programmed.itemMeta = blockStateMeta
-
-        // Replace the item in hand if possible; otherwise add to inv/drop
-        if (hand != null && HopperFilterItem.isHopperFilter(hand)) {
-            player.inventory.setItem(session.handSlot, programmed)
-        } else {
-            val leftover = player.inventory.addItem(programmed)
-            if (leftover.isNotEmpty()) {
-                leftover.values.forEach { player.world.dropItemNaturally(player.location, it) }
-            }
-        }
-
-        // Consume exactly 1 from each input slot
-        for (slot in INPUT_SLOTS) {
-            val st = top.getItem(slot) ?: continue
-            if (st.amount <= 1) top.setItem(slot, null) else st.amount -= 1
-        }
-        if (!session.returned) {
-            returnItemsToPlayer(player, top)
-            session.returned = true
-        }
-
-        player.playSound(player.location, Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 0.8f, 1.1f)
-        player.successActionBar("Filter updated.")
-
-        closeAndCleanup(player)
     }
 
     private fun closeAndCleanup(player: Player) {
@@ -275,5 +224,84 @@ class HopperFilterEditor : Listener {
             }
         }
     }
+
+    private fun prefillFromFilter(filterItem: ItemStack, top: Inventory, session: Session) {
+        val meta = filterItem.itemMeta as? BlockStateMeta ?: return
+        val shulker = meta.blockState as? ShulkerBox ?: return
+
+        var i = 0
+        for (stack in shulker.inventory.contents) {
+            if (stack == null || stack.type == Material.AIR) continue
+            if (i >= INPUT_SLOTS.size) break
+
+            val slot = INPUT_SLOTS.elementAt(i++)
+            val one = stack.clone().apply { amount = 1 }
+            top.setItem(slot, one)
+
+            session.originalSlots.add(slot)
+        }
+    }
+
+    private fun programFilterFromTop(
+        player: Player,
+        session: Session,
+        top: Inventory,
+    ): Boolean {
+        // Collect 1x samples from all filled input slots
+        val samples = buildList {
+            for (slot in INPUT_SLOTS) {
+                val st = top.getItem(slot) ?: continue
+                add(st.clone().apply { amount = 1 })
+            }
+        }
+
+        // Find filter item (prefer the original hand slot)
+        val hand = player.inventory.getItem(session.handSlot)
+        val filter = if (hand != null && HopperFilterItem.isHopperFilter(hand)) hand
+        else player.inventory.contents
+            .firstOrNull { it != null && HopperFilterItem.isHopperFilter(it) }
+
+        if (filter == null) {
+            player.failActionBar("Filter item not found anymore.", sound = VILLAGER_NO_SOUND)
+            return false
+        }
+
+        val type = HopperFilterItem.getHopperFilterType(filter) ?: session.type
+        val programmed = HopperFilterItem.toItem(type)
+
+        val meta = programmed.itemMeta as? BlockStateMeta ?: run {
+            player.failActionBar("Unexpected: filter is not block state-able.")
+            return false
+        }
+        val shulker = meta.blockState as? ShulkerBox ?: run {
+            player.failActionBar("Unexpected: filter is not a shulker box.")
+            return false
+        }
+
+        // Write samples into the filter
+        shulker.inventory.clear()
+        samples.forEach { shulker.inventory.addItem(it) }
+        meta.blockState = shulker
+        programmed.itemMeta = meta
+
+        if (hand != null && HopperFilterItem.isHopperFilter(hand)) {
+            player.inventory.setItem(session.handSlot, programmed)
+        } else {
+            val leftover = player.inventory.addItem(programmed)
+            if (leftover.isNotEmpty()) {
+                leftover.values.forEach { player.world.dropItemNaturally(player.location, it) }
+            }
+        }
+
+        for (slot in INPUT_SLOTS) {
+            val st = top.getItem(slot) ?: continue
+            if (st.amount <= 1) top.setItem(slot, null) else st.amount -= 1
+        }
+
+        returnItemsToPlayer(player, top)
+
+        return true
+    }
+
 
 }
