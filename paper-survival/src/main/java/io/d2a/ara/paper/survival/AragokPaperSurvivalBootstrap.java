@@ -4,7 +4,6 @@ import io.papermc.paper.plugin.bootstrap.BootstrapContext;
 import io.papermc.paper.plugin.bootstrap.PluginBootstrap;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import io.papermc.paper.registry.RegistryKey;
-import io.papermc.paper.registry.TypedKey;
 import io.papermc.paper.registry.data.EnchantmentRegistryEntry;
 import io.papermc.paper.registry.event.RegistryEvents;
 import io.papermc.paper.registry.keys.tags.EnchantmentTagKeys;
@@ -24,34 +23,52 @@ public class AragokPaperSurvivalBootstrap implements PluginBootstrap {
     public void bootstrap(@NotNull final BootstrapContext context) {
         context.getLogger().info("Bootstrapping Aragok");
 
-        final var GREEN_THUMB = TypedKey.create(RegistryKey.ENCHANTMENT, Constants.GREEN_THUMB);
-
-        context.getLogger().info("Registering Green Thumb Enchantment with key: {}", GREEN_THUMB);
         context.getLifecycleManager().registerEventHandler(RegistryEvents.ENCHANTMENT
                 .compose()
-                .newHandler(event -> event
-                        .registry()
-                        .register(
-                                GREEN_THUMB,
-                                builder -> builder
-                                        .description(Component.translatable(Constants.GREEN_THUMB_ENCHANTMENT_KEY, "Green Thumb"))
-                                        .supportedItems(event.getOrCreateTag(ItemTypeTagKeys.ENCHANTABLE_MINING))
-                                        .weight(5)
-                                        .maxLevel(1)
-                                        .minimumCost(EnchantmentRegistryEntry.EnchantmentCost.of(1, 0))
-                                        .maximumCost(EnchantmentRegistryEntry.EnchantmentCost.of(50, 0))
-                                        .anvilCost(2)
-                                        .activeSlots(EquipmentSlotGroup.HAND)
-                        )));
+                .newHandler(event -> {
+                    final var registry = event.registry();
 
-        context.getLogger().info("Registering Green Thumb Enchantment to relevant tags");
-        context.getLifecycleManager().registerEventHandler(LifecycleEvents.TAGS
-                        .postFlatten(RegistryKey.ENCHANTMENT),
+                    context.getLogger().info("Registering Green Thumb Enchantment with key: {}", Constants.GREEN_THUMB_TYPED_KEY);
+                    registry.register(
+                            Constants.GREEN_THUMB_TYPED_KEY,
+                            builder -> builder
+                                    .description(Component.translatable(Constants.GREEN_THUMB_ENCHANTMENT_KEY, "Green Thumb"))
+                                    .supportedItems(event.getOrCreateTag(ItemTypeTagKeys.ENCHANTABLE_MINING))
+                                    .weight(5)
+                                    .maxLevel(1)
+                                    .minimumCost(EnchantmentRegistryEntry.EnchantmentCost.of(1, 0))
+                                    .maximumCost(EnchantmentRegistryEntry.EnchantmentCost.of(50, 0))
+                                    .anvilCost(2)
+                                    .activeSlots(EquipmentSlotGroup.HAND)
+                    );
+
+                    context.getLogger().info("Registering Telekinesis Enchantment with key: {}", Constants.TELEKINESIS_TYPED_KEY);
+                    registry.register(
+                            Constants.TELEKINESIS_TYPED_KEY,
+                            builder -> builder
+                                    .description(Component.translatable(Constants.TELEKINESIS_ENCHANTMENT_KEY, "Telekinesis"))
+                                    .supportedItems(event.getOrCreateTag(ItemTypeTagKeys.ENCHANTABLE_MINING))
+                                    .weight(1)
+                                    .maxLevel(1)
+                                    .minimumCost(EnchantmentRegistryEntry.EnchantmentCost.of(40, 0))
+                                    .maximumCost(EnchantmentRegistryEntry.EnchantmentCost.of(60, 0))
+                                    .anvilCost(8)
+                                    .activeSlots(EquipmentSlotGroup.MAINHAND)
+                    );
+                }));
+
+        context.getLifecycleManager().registerEventHandler(
+                LifecycleEvents.TAGS.postFlatten(RegistryKey.ENCHANTMENT),
                 event -> {
+                    context.getLogger().info("Registering Enchantments to relevant tags");
+
                     final PostFlattenTagRegistrar<Enchantment> registrar = event.registrar();
-                    registrar.addToTag(EnchantmentTagKeys.TRADEABLE, Set.of(GREEN_THUMB));
-                    registrar.addToTag(EnchantmentTagKeys.NON_TREASURE, Set.of(GREEN_THUMB));
-                    registrar.addToTag(EnchantmentTagKeys.IN_ENCHANTING_TABLE, Set.of(GREEN_THUMB));
+                    registrar.addToTag(EnchantmentTagKeys.TRADEABLE,
+                            Set.of(Constants.GREEN_THUMB_TYPED_KEY, Constants.TELEKINESIS_TYPED_KEY));
+                    registrar.addToTag(EnchantmentTagKeys.NON_TREASURE,
+                            Set.of(Constants.GREEN_THUMB_TYPED_KEY, Constants.TELEKINESIS_TYPED_KEY));
+                    registrar.addToTag(EnchantmentTagKeys.IN_ENCHANTING_TABLE,
+                            Set.of(Constants.GREEN_THUMB_TYPED_KEY, Constants.TELEKINESIS_TYPED_KEY));
                 });
     }
 

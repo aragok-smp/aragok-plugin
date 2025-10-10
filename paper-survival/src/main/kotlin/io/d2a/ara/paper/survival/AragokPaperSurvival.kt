@@ -21,6 +21,7 @@ import io.d2a.ara.paper.survival.harvest.SmartHarvestListener
 import io.d2a.ara.paper.survival.hopper.*
 import io.d2a.ara.paper.survival.restriction.DimensionRestriction
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
+import io.d2a.ara.paper.survival.telekinesis.TelekinesisListener
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.RecipeChoice
@@ -84,6 +85,7 @@ class AragokPaperSurvival : JavaPlugin() {
         registerHopperFeature()
         registerEndStorageFeature()
         registerHarvestFeature()
+        registerTelekinesisFeature()
 
         logger.info("Enabled aragok-survival")
     }
@@ -280,6 +282,14 @@ class AragokPaperSurvival : JavaPlugin() {
 
         registerEvents(
             SmartHarvestListener(logger)
+        )
+    }
+
+    fun registerTelekinesisFeature() {
+        logger.info("Registering telekinesis feature...")
+
+        registerEvents(
+            TelekinesisListener()
         )
     }
 
