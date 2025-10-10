@@ -33,7 +33,7 @@ public class AragokPaperSurvivalBootstrap implements PluginBootstrap {
                             Constants.GREEN_THUMB_TYPED_KEY,
                             builder -> builder
                                     .description(Component.translatable(Constants.GREEN_THUMB_ENCHANTMENT_KEY, "Green Thumb"))
-                                    .supportedItems(event.getOrCreateTag(ItemTypeTagKeys.ENCHANTABLE_MINING))
+                                    .supportedItems(event.getOrCreateTag(ItemTypeTagKeys.HOES))
                                     .weight(5)
                                     .maxLevel(1)
                                     .minimumCost(EnchantmentRegistryEntry.EnchantmentCost.of(1, 0))
@@ -51,7 +51,7 @@ public class AragokPaperSurvivalBootstrap implements PluginBootstrap {
                                     .weight(1)
                                     .maxLevel(1)
                                     .minimumCost(EnchantmentRegistryEntry.EnchantmentCost.of(40, 0))
-                                    .maximumCost(EnchantmentRegistryEntry.EnchantmentCost.of(60, 0))
+                                    .maximumCost(EnchantmentRegistryEntry.EnchantmentCost.of(70, 0))
                                     .anvilCost(8)
                                     .activeSlots(EquipmentSlotGroup.MAINHAND)
                     );
