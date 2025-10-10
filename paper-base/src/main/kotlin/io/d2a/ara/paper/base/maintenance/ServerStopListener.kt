@@ -16,7 +16,7 @@ class ServerStopListener(
 ) : Listener {
 
     companion object {
-        private const val DEBOUNCE_SECONDS = 15L
+        private const val DEBOUNCE_SECONDS = 20L
     }
 
     @OptIn(ExperimentalAtomicApi::class)
