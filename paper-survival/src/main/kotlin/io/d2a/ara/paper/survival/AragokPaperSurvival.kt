@@ -6,6 +6,7 @@ import io.d2a.ara.paper.survival.activity.ActivityChangedNotifier
 import io.d2a.ara.paper.survival.border.BorderTask
 import io.d2a.ara.paper.survival.coal.CoalType.*
 import io.d2a.ara.paper.survival.coal.FurnaceSmeltCoalListener
+import io.d2a.ara.paper.survival.commands.GiveItemCommand
 import io.d2a.ara.paper.survival.commands.RestrictionCommand
 import io.d2a.ara.paper.survival.commands.TrashCommand
 import io.d2a.ara.paper.survival.devnull.DevNullItem
@@ -20,6 +21,7 @@ import io.d2a.ara.paper.survival.hopper.*
 import io.d2a.ara.paper.survival.listeners.PickUpCraftUnlockRecipeListener
 import io.d2a.ara.paper.survival.restriction.DimensionRestriction
 import io.d2a.ara.paper.survival.sleep.EnterBedSleepListener
+import io.d2a.ara.paper.survival.telekinesis.TelekinesisListener
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.RecipeChoice
@@ -73,7 +75,8 @@ class AragokPaperSurvival : JavaPlugin() {
         // commands
         registerCommands(
             restrictionCommand,
-            TrashCommand()
+            TrashCommand(),
+            GiveItemCommand(logger)
         )
 
         // features
@@ -83,6 +86,7 @@ class AragokPaperSurvival : JavaPlugin() {
         registerHopperFeature()
         registerEndStorageFeature()
         registerHarvestFeature()
+        registerTelekinesisFeature()
 
         logger.info("Enabled aragok-survival")
     }
@@ -290,6 +294,14 @@ class AragokPaperSurvival : JavaPlugin() {
 
         registerEvents(
             SmartHarvestListener(logger)
+        )
+    }
+
+    fun registerTelekinesisFeature() {
+        logger.info("Registering telekinesis feature...")
+
+        registerEvents(
+            TelekinesisListener()
         )
     }
 
