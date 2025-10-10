@@ -50,9 +50,9 @@ public class AragokPaperSurvivalBootstrap implements PluginBootstrap {
                                     .supportedItems(event.getOrCreateTag(ItemTypeTagKeys.ENCHANTABLE_MINING))
                                     .weight(1)
                                     .maxLevel(1)
-                                    .minimumCost(EnchantmentRegistryEntry.EnchantmentCost.of(40, 0))
+                                    .minimumCost(EnchantmentRegistryEntry.EnchantmentCost.of(30, 0))
                                     .maximumCost(EnchantmentRegistryEntry.EnchantmentCost.of(70, 0))
-                                    .anvilCost(8)
+                                    .anvilCost(5)
                                     .activeSlots(EquipmentSlotGroup.MAINHAND)
                     );
                 }));
