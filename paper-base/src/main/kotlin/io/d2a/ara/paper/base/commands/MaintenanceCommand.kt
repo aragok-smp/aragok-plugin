@@ -20,8 +20,8 @@ class MaintenanceCommand(
                     Commands.literal("stop")
                         .requiresInternalPermission("maintenance", "server", "stop")
                         .executes { ctx ->
-                            serverStopListener.stopServer = !serverStopListener.stopServer
-                            if (serverStopListener.stopServer) {
+                            serverStopListener.stopFlag = !serverStopListener.stopFlag
+                            if (serverStopListener.stopFlag) {
                                 ctx.success("Server will stop when no players are online")
                             } else {
                                 ctx.success("Server will NOT stop when no players are online")
@@ -33,7 +33,7 @@ class MaintenanceCommand(
                     Commands.literal("status")
                         .requiresInternalPermission("maintenance", "server", "status")
                         .executes { ctx ->
-                            if (serverStopListener.stopServer) {
+                            if (serverStopListener.stopFlag) {
                                 ctx.success("<gray>Server <red>WILL stop</red> when no players are online")
                             } else {
                                 ctx.success("<gray>Server <yellow>will NOT</yellow> stop when no players are online")

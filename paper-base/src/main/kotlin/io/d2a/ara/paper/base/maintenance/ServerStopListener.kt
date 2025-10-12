@@ -7,8 +7,6 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.scheduler.BukkitTask
-import kotlin.concurrent.atomics.AtomicBoolean
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 class ServerStopListener(
     private val plugin: Plugin,
@@ -19,28 +17,27 @@ class ServerStopListener(
         private const val DEBOUNCE_SECONDS = 20L
     }
 
-    @OptIn(ExperimentalAtomicApi::class)
-    private var stopFlag = AtomicBoolean(true)
-
-    private var pendingShutdownTask: BukkitTask? = null
-
-    @OptIn(ExperimentalAtomicApi::class)
-    var stopServer: Boolean
-        get() = stopFlag.load()
+    var stopFlag = false
         set(value) {
-            if (!stopFlag.compareAndSet(value, value)) {
+            if (field == value) return
+
+            field = value
+            if (value) {
                 evaluateAndMaybeSchedule()
+
+                plugin.server.broadcastRichMessage("<green>aragok: <gray>Automatic server stop enabled")
+            } else {
+                cancelPendingShutdown()
+
+                plugin.server.broadcastRichMessage("<green>aragok: <gray>Automatic server stop disabled")
             }
         }
 
+    private var pendingShutdownTask: BukkitTask? = null
+
     @EventHandler
-    fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (!event.player.hasPermission(adminPermission)) {
-            cancelPendingShutdown()
-        }
-        if (!stopServer) {
-            cancelPendingShutdown()
-        }
+    fun onPlayerJoin(@Suppress("unused") event: PlayerJoinEvent) {
+        cancelPendingShutdown()
     }
 
     @EventHandler
@@ -49,7 +46,7 @@ class ServerStopListener(
     }
 
     private fun evaluateAndMaybeSchedule() {
-        if (!stopServer) return cancelPendingShutdown()
+        if (!stopFlag) return cancelPendingShutdown()
 
         val nonAdminsOnline = plugin.server.onlinePlayers
             .any { !it.hasPermission(adminPermission) }
@@ -63,11 +60,10 @@ class ServerStopListener(
                         "stopping server in $DEBOUNCE_SECONDS seconds if no one joins"
             )
             pendingShutdownTask = plugin.server.scheduler.runTaskLater(plugin, Runnable {
-                val stillNoNonAdmin = plugin.server.onlinePlayers
-                    .none { !it.hasPermission(adminPermission) }
-                val stillShouldStop = stopServer
+                val stillShouldStop = stopFlag
+                val noPlayerOnline = plugin.server.onlinePlayers.isEmpty()
 
-                if (stillShouldStop && stillNoNonAdmin) {
+                if (stillShouldStop && noPlayerOnline) {
                     plugin.server.broadcastRichMessage("<green>aragok: <gray>No non-admin players online, stopping server now")
                     plugin.server.shutdown()
                 } else {
