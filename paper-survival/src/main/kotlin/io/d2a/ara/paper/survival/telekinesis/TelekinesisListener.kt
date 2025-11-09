@@ -1,7 +1,7 @@
 package io.d2a.ara.paper.survival.telekinesis
 
+import io.d2a.ara.paper.base.block.BlockKey
 import org.bukkit.Bukkit
-import org.bukkit.Location
 import org.bukkit.block.Container
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -19,14 +19,6 @@ class TelekinesisListener : Listener {
     companion object {
         const val MAX_ENTRIES = 5_000
         const val PURGE_PERCENTAGE = 0.2
-    }
-
-    private data class BlockKey(val worldId: UUID, val x: Int, val y: Int, val z: Int) {
-        companion object {
-            fun from(loc: Location): BlockKey {
-                return BlockKey(loc.world.uid, loc.blockX, loc.blockY, loc.blockZ)
-            }
-        }
     }
 
     private data class Entry(val owner: UUID, val expiresAt: Long, val level: Int)
