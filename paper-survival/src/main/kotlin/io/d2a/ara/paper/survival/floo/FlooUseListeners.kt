@@ -158,15 +158,25 @@ class FlooUseListeners(
         val destinationWorldUID = powderPdc.getString(FLOO_POWDER_DESTINATION_WORLD) ?: return
 
         val world = Bukkit.getWorld(UUID.fromString(destinationWorldUID))
-            ?: return player.failActionBar("The destination world was not found.")
+            ?: run {
+                onTeleportFail.invoke()
+                return player.failActionBar("The destination world was not found.")
+            }
 
         // get target soul fire and make sure it is valid and has the same name
         val destinationBlock = world.getBlockAt(destinationX, destinationY, destinationZ)
         val destinationCampfire = destinationBlock.state as? Campfire
-            ?: return player.failActionBar("The destination was not found.")
+            ?: run {
+                onTeleportFail.invoke()
+                return player.failActionBar("The destination was not found.")
+            }
         val actualName = destinationCampfire.persistentDataContainer.getString(FLOO_POWDER_DESTINATION_NAME)
-            ?: return player.failActionBar("The destination is not connected to the Floo Network.")
+            ?: run {
+                onTeleportFail.invoke()
+                return player.failActionBar("The destination is not connected to the Floo Network.")
+            }
         if (destinationName != actualName) {
+            onTeleportFail.invoke()
             return player.failActionBar(
                 "The destination has changed and is no longer valid.",
                 sound = VILLAGER_NO_SOUND
