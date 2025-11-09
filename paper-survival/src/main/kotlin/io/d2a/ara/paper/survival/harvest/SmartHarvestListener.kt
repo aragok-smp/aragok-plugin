@@ -1,7 +1,9 @@
 package io.d2a.ara.paper.survival.harvest
 
 import io.d2a.ara.paper.survival.Constants
+import io.d2a.ara.paper.survival.telekinesis.TelekinesisUtil
 import org.bukkit.Material
+import org.bukkit.Particle
 import org.bukkit.block.data.Ageable
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -44,8 +46,24 @@ class SmartHarvestListener(
 
         event.isCancelled = true // Prevent default interaction
 
-        // break the block
-        block.breakNaturally(tool)
+        val drops = block.getDrops(tool, player)
+        val dropLocation = block.location.clone().add(.5, .1, .5)
+
+        // "break" the block
+        block.type = Material.AIR // temporarily set to air to mimic breaking
+
+        if (TelekinesisUtil.getTelekinesisLevel(player, tool) != null) {
+            for (drop in drops) {
+                val remainder = TelekinesisUtil.pickupStack(player, drop, dropLocation)
+                if (remainder != null) {
+                    dropLocation.world.dropItemNaturally(dropLocation, remainder)
+                }
+            }
+        } else {
+            for (drop in drops) {
+                block.world.dropItemNaturally(dropLocation, drop)
+            }
+        }
 
         // damage the hoe
         player.damageItemStack(hand, 1)
@@ -60,6 +78,10 @@ class SmartHarvestListener(
         // Replant the crop
         block.type = type
         block.blockData = newAgeable
+
+        // play effect
+        block.world.spawnParticle(Particle.COMPOSTER, dropLocation, 4, 0.05, 0.05, 0.05, 0.0)
+        block.world.spawnParticle(Particle.END_ROD, dropLocation, 1, 0.0, 0.02, 0.0, 0.01)
     }
 
 
