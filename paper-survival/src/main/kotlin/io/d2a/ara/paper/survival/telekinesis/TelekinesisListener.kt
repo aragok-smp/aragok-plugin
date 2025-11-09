@@ -21,20 +21,10 @@ class TelekinesisListener : Listener {
         const val PURGE_PERCENTAGE = 0.2
     }
 
-    private data class BlockKey(
-        val worldId: UUID,
-        val x: Int,
-        val y: Int,
-        val z: Int,
-    ) {
+    private data class BlockKey(val worldId: UUID, val x: Int, val y: Int, val z: Int) {
         companion object {
             fun from(loc: Location): BlockKey {
-                return BlockKey(
-                    loc.world.uid,
-                    loc.blockX,
-                    loc.blockY,
-                    loc.blockZ,
-                )
+                return BlockKey(loc.world.uid, loc.blockX, loc.blockY, loc.blockZ)
             }
         }
     }
@@ -43,33 +33,6 @@ class TelekinesisListener : Listener {
 
     private val owners = ConcurrentHashMap<BlockKey, Entry>(512, 0.75f, 1)
 
-    private fun putOwner(key: BlockKey, owner: UUID, telekinesisLevel: Int) {
-        val time = System.currentTimeMillis()
-        owners[key] = Entry(owner, time + 4_000L, telekinesisLevel)
-
-        if (owners.size > MAX_ENTRIES) {
-            // purge 20% of entries
-
-            val rng = ThreadLocalRandom.current()
-            var scanned = 0
-            val limit = (owners.size * PURGE_PERCENTAGE).coerceAtLeast(64.0).toInt()
-            val now = System.currentTimeMillis()
-            val it = owners.entries.iterator()
-            while (it.hasNext() && scanned < limit) {
-                val (_, v) = it.next()
-                scanned++
-
-                if (rng.nextBoolean() || v.expiresAt < now) {
-                    it.remove()
-                }
-            }
-        }
-    }
-
-    private fun getEntryIfFresh(key: BlockKey): Entry? {
-        val entry = owners[key] ?: return null
-        return if (entry.expiresAt >= System.currentTimeMillis()) entry else null
-    }
 
     @EventHandler
     fun onBlockBreak(event: BlockBreakEvent) {
@@ -82,7 +45,6 @@ class TelekinesisListener : Listener {
         // this may be a bit too overpowered otherwise
         if (event.block.state is Container) return
 
-        println("---")
         putOwner(BlockKey.from(event.block.location), player.uniqueId, level)
     }
 
@@ -151,6 +113,37 @@ class TelekinesisListener : Listener {
                 event.droppedExp = 0
             }
         }
+    }
+
+    private fun purgeSomeEntries() {
+        // purge 20% of entries
+        val rng = ThreadLocalRandom.current()
+        var scanned = 0
+        val limit = (owners.size * PURGE_PERCENTAGE).coerceAtLeast(64.0).toInt()
+        val now = System.currentTimeMillis()
+        val it = owners.entries.iterator()
+        while (it.hasNext() && scanned < limit) {
+            val (_, v) = it.next()
+            scanned++
+
+            if (rng.nextBoolean() || v.expiresAt < now) {
+                it.remove()
+            }
+        }
+    }
+
+    private fun putOwner(key: BlockKey, owner: UUID, telekinesisLevel: Int) {
+        val time = System.currentTimeMillis()
+        owners[key] = Entry(owner, time + 4_000L, telekinesisLevel)
+
+        if (owners.size > MAX_ENTRIES) {
+            purgeSomeEntries()
+        }
+    }
+
+    private fun getEntryIfFresh(key: BlockKey): Entry? {
+        val entry = owners[key] ?: return null
+        return if (entry.expiresAt >= System.currentTimeMillis()) entry else null
     }
 
 }
