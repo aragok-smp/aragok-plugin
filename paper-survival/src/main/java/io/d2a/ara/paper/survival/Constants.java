@@ -29,7 +29,7 @@ public class Constants {
 
     public static final String TELEKINESIS_ENCHANTMENT_KEY = "enchantment.telekinesis";
 
-    public static final Key ENCHANTABLE_WEAPON_MINING_KEY = Key.key("aragok",  "enchantable_weapon_mining");
+    public static final Key ENCHANTABLE_WEAPON_MINING_KEY = Key.key("aragok", "enchantable_weapon_mining");
     public static final TagKey<ItemType> ENCHANTABLE_WEAPON_MINING = ItemTypeTagKeys.create(ENCHANTABLE_WEAPON_MINING_KEY);
 
 
