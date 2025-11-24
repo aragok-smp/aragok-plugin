@@ -7,6 +7,7 @@ import io.d2a.ara.paper.survival.border.BorderTask
 import io.d2a.ara.paper.survival.coal.CoalType.*
 import io.d2a.ara.paper.survival.coal.FurnaceSmeltCoalListener
 import io.d2a.ara.paper.survival.commands.GiveItemCommand
+import io.d2a.ara.paper.survival.commands.ItemInventoryCommand
 import io.d2a.ara.paper.survival.commands.RestrictionCommand
 import io.d2a.ara.paper.survival.commands.TrashCommand
 import io.d2a.ara.paper.survival.devnull.DevNullItem
@@ -76,7 +77,8 @@ class AragokPaperSurvival : JavaPlugin() {
         registerCommands(
             restrictionCommand,
             TrashCommand(),
-            GiveItemCommand(logger)
+            GiveItemCommand(logger),
+            ItemInventoryCommand(logger)
         )
 
         // features
